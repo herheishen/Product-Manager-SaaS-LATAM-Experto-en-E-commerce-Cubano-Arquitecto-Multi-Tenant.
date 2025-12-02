@@ -1,14 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { getResellerKPIs, getOrders, getPlanLimits, getRecentNotifications } from '../services/api';
-import { KPI, Order, OrderStatus, PlanTier, Notification, NotificationType } from '../types';
-import { TrendingUp, TrendingDown, Package, Zap, ArrowRight, DollarSign, Bell, AlertTriangle, Tag, ShieldAlert } from 'lucide-react';
+import { getResellerKPIs, getOrders, getPlanLimits, getRecentNotifications, getInventoryPredictions } from '../services/api';
+import { KPI, Order, OrderStatus, PlanTier, Notification, NotificationType, AIPrediction } from '../types';
+import { TrendingUp, TrendingDown, Package, Zap, ArrowRight, DollarSign, Bell, AlertTriangle, Tag, ShieldAlert, Sparkles, BrainCircuit } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [predictions, setPredictions] = useState<AIPrediction[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Simulated User Plan State
@@ -28,14 +29,16 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [kpiData, orderData, notifData] = await Promise.all([
+      const [kpiData, orderData, notifData, predData] = await Promise.all([
         getResellerKPIs(),
         getOrders(),
-        getRecentNotifications()
+        getRecentNotifications(),
+        getInventoryPredictions()
       ]);
       setKpis(kpiData);
       setRecentOrders(orderData.slice(0, 5));
       setNotifications(notifData);
+      setPredictions(predData);
       setLoading(false);
     };
     fetchData();
@@ -166,9 +169,49 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Notifications & Orders */}
+        {/* Right Column: Notifications & AI Insights */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Notification Center - NEW */}
+          {/* AI Inventory Forecast - NEW */}
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-3 opacity-5">
+               <BrainCircuit size={80} className="text-indigo-600"/>
+             </div>
+             <div className="flex items-center gap-2 mb-4 relative z-10">
+                <Sparkles size={18} className="text-indigo-600" />
+                <h3 className="font-bold text-slate-800 text-sm">Predicción de Stock (IA)</h3>
+             </div>
+             
+             <div className="space-y-4 relative z-10">
+               {predictions.map((p) => (
+                 <div key={p.productId} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                   <div className="flex justify-between items-start mb-1">
+                      <h4 className="font-bold text-slate-700 text-xs truncate max-w-[120px]">{p.productName}</h4>
+                      {p.recommendation === 'RESTOCK_NOW' && (
+                        <span className="text-[9px] bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded uppercase">Crítico</span>
+                      )}
+                   </div>
+                   <div className="flex justify-between items-end">
+                      <div>
+                         <p className="text-[10px] text-slate-400">Stock Actual: {p.currentStock}</p>
+                         <p className="text-[10px] text-slate-400">Ventas/día: {p.burnRatePerDay}</p>
+                      </div>
+                      <div className="text-right">
+                         <span className="block text-xl font-bold text-slate-800 leading-none">{p.daysUntilStockout}</span>
+                         <span className="text-[9px] text-slate-500 font-medium">días restantes</span>
+                      </div>
+                   </div>
+                   {p.daysUntilStockout < 5 && (
+                     <div className="mt-2 text-[10px] text-orange-600 bg-orange-50 px-2 py-1 rounded font-medium">
+                       ⚠️ Sugerencia: Pausar venta o buscar nuevo proveedor.
+                     </div>
+                   )}
+                 </div>
+               ))}
+               {predictions.length === 0 && <p className="text-xs text-slate-400">Sin datos suficientes para predecir.</p>}
+             </div>
+          </div>
+
+          {/* Notification Center */}
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
              <div className="flex items-center gap-2 mb-4">
                 <Bell size={18} className="text-slate-800" />
@@ -194,42 +237,6 @@ const Dashboard: React.FC = () => {
                  ))
                )}
              </div>
-             <button className="w-full text-xs text-sky-600 font-bold mt-3 hover:underline">Ver Historial</button>
-          </div>
-
-          {/* Recent Orders List - Compact */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col min-w-0">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-800 text-sm">Pedidos Recientes</h3>
-              <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-1 rounded-full font-bold">{recentOrders.length}</span>
-            </div>
-            
-            <div className="space-y-3 flex-1 overflow-auto pr-1 custom-scrollbar max-h-[400px]">
-              {recentOrders.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 text-xs">No hay pedidos aún.</div>
-              ) : (
-                recentOrders.map((order) => (
-                  <div key={order.id} className="p-3 rounded-lg border border-slate-100 hover:border-sky-100 hover:bg-sky-50 transition-all cursor-pointer group">
-                    <div className="flex justify-between items-start mb-1">
-                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                          order.status === OrderStatus.CONFIRMED ? 'bg-green-100 text-green-700' :
-                          order.status === OrderStatus.PENDING ? 'bg-amber-100 text-amber-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
-                          {order.status === OrderStatus.CONFIRMED ? 'Conf' : order.status === OrderStatus.PENDING ? 'Pend' : 'Entr'}
-                       </span>
-                       <span className="text-xs font-bold text-slate-900">{order.total} {order.currency}</span>
-                    </div>
-                    <p className="text-xs font-bold text-slate-800 truncate">{order.customerName}</p>
-                    <p className="text-[10px] text-slate-500 truncate">{order.items[0]?.productName}</p>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            <button className="w-full py-2.5 mt-4 text-xs text-slate-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors flex items-center justify-center">
-              Ver Todos <ArrowRight size={14} className="ml-2" />
-            </button>
           </div>
         </div>
       </div>

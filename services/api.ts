@@ -1,5 +1,5 @@
 
-import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails, Notification, NotificationType } from '../types';
+import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails, Notification, NotificationType, AIPrediction, AIPriceSuggestion, FraudAnalysis } from '../types';
 
 // Mock Data - Mercado Cubano Realista (Combos, Aseo, Electrónica)
 const MOCK_PRODUCTS: Product[] = [
@@ -314,6 +314,70 @@ export const checkProductCompliance = (name: string, description: string): { all
     }
   }
   return { allowed: true };
+};
+
+// --- AI SERVICES (Simulated) ---
+
+export const generateSmartCopy = async (productName: string, price: number, currency: string, description: string): Promise<string> => {
+  await delay(600);
+  const emojis = ['🔥', '📦', '🚀', '👀', '🇨🇺', '💸', '🚨'];
+  const openers = ['¡Se acaba la espera!', 'Oportunidad única mi gente', 'Acabado de llegar', 'Lo que buscabas'];
+  const closers = ['¡Escribe ya!', 'Pocas unidades', 'Mensajería a toda La Habana'];
+  
+  const random = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+  
+  return `${random(emojis)} *${productName.toUpperCase()}* ${random(emojis)}\n\n${description}\n\n💰 *Precio: ${price} ${currency}*\n\n✅ ${random(closers)}\n📍 Pedidos al WhatsApp`;
+};
+
+export const getInventoryPredictions = async (): Promise<AIPrediction[]> => {
+  await delay(800);
+  // Simulate prediction based on mock products
+  return MOCK_PRODUCTS.slice(0, 3).map(p => ({
+    productId: p.id,
+    productName: p.name,
+    currentStock: p.stock,
+    burnRatePerDay: Math.floor(Math.random() * 3) + 1, // Random sales velocity
+    daysUntilStockout: Math.floor(p.stock / (Math.random() * 2 + 1)),
+    recommendation: p.stock < 10 ? 'RESTOCK_NOW' : 'NORMAL'
+  }));
+};
+
+export const getSmartPriceSuggestion = async (productId: string, basePrice: number, zone: string): Promise<AIPriceSuggestion> => {
+  await delay(500);
+  // Heuristic: Wealthier zones (Playa, Vedado) tolerate higher markups
+  const highIncomeZones = ['Playa', 'Plaza de la Revolución'];
+  const isHighIncome = highIncomeZones.includes(zone);
+  const multiplier = isHighIncome ? 1.35 : 1.20;
+  const suggested = Math.round(basePrice * multiplier);
+  
+  return {
+    productId,
+    suggestedPrice: suggested,
+    zoneMultiplier: multiplier,
+    reasoning: isHighIncome 
+      ? `Zona de alta demanda (${zone}). Puedes aumentar el margen un 35%.` 
+      : `Zona estándar (${zone}). Se recomienda margen moderado del 20% para rotación rápida.`
+  };
+};
+
+export const analyzeFraudRisk = async (orderTotal: number, customerPhone: string): Promise<FraudAnalysis> => {
+  await delay(300);
+  // Simple heuristic
+  const isHighValue = orderTotal > 200; // USD
+  const isVoIP = !validateCubanPhone(customerPhone);
+  
+  const flags = [];
+  if (isHighValue) flags.push('Monto inusualmente alto');
+  if (isVoIP) flags.push('Número de teléfono sospechoso');
+  
+  const score = (isHighValue ? 40 : 0) + (isVoIP ? 50 : 0);
+  
+  return {
+    orderId: 'temp',
+    riskScore: score,
+    riskLevel: score > 70 ? 'HIGH' : score > 30 ? 'MEDIUM' : 'LOW',
+    flags
+  };
 };
 
 // Services

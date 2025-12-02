@@ -7,6 +7,7 @@ import StoreManager from './pages/StoreManager';
 import AdminDashboard from './pages/AdminDashboard';
 import PublicStore from './pages/PublicStore';
 import Subscription from './pages/Subscription';
+import AIChatbot from './components/AIChatbot';
 import { UserRole } from './types';
 
 // Simple Router for the single XML constraint
@@ -46,9 +47,6 @@ const App: React.FC = () => {
         case '/':
           return <AdminDashboard />;
         case '/admin/suppliers':
-           // Reuse AdminDashboard with forced tab via prop would be ideal, 
-           // but for MVP we render the dashboard which defaults to overview
-           // Real app would parse URL params
            return <AdminDashboard />;
         case '/admin/finance':
            return <div className="p-10 text-center text-slate-500">Módulo Financiero Detallado (En Desarrollo)</div>;
@@ -91,14 +89,17 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout 
-      role={role} 
-      onRoleChange={setRole}
-      currentPath={currentPath}
-      onNavigate={setCurrentPath}
-    >
-      {renderPage()}
-    </Layout>
+    <>
+      <Layout 
+        role={role} 
+        onRoleChange={setRole}
+        currentPath={currentPath}
+        onNavigate={setCurrentPath}
+      >
+        {renderPage()}
+      </Layout>
+      {role === UserRole.RESELLER && <AIChatbot />}
+    </>
   );
 };
 

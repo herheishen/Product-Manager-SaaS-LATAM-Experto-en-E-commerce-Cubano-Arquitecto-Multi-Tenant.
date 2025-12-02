@@ -1,14 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
-import { Share2, Save, ExternalLink, MessageCircle, DollarSign, Wallet, Zap, Package, Edit2, Eye, EyeOff, Search, ArrowRight } from 'lucide-react';
-import { StoreConfig, PlanTier, StoreProduct } from '../types';
-import { getMyStoreProducts } from '../services/api';
+import { Share2, Save, ExternalLink, MessageCircle, DollarSign, Wallet, Zap, Package, Edit2, Eye, EyeOff, Search, ArrowRight, Wand2, Calculator, X } from 'lucide-react';
+import { StoreConfig, PlanTier, StoreProduct, AIPriceSuggestion } from '../types';
+import { getMyStoreProducts, generateSmartCopy, getSmartPriceSuggestion } from '../services/api';
 
 const StoreManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CONFIG' | 'CATALOG'>('CONFIG');
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   
+  // AI Modal States
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
+  const [generatedCopy, setGeneratedCopy] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const [priceModalOpen, setPriceModalOpen] = useState(false);
+  const [priceSuggestion, setPriceSuggestion] = useState<AIPriceSuggestion | null>(null);
+
   const [config, setConfig] = useState<StoreConfig>({
     name: "Mi Kiosko Habana",
     subdomain: "tienda-habana.kiosko.cu",
@@ -67,6 +75,35 @@ const StoreManager: React.FC = () => {
 
   const toggleProductActive = (id: string) => {
     setProducts(products.map(p => p.id === id ? { ...p, isActive: !p.isActive } : p));
+  };
+
+  // AI Actions
+  const handleGenerateCopy = async (product: StoreProduct) => {
+    setIsGenerating(true);
+    setCopyModalOpen(true);
+    setGeneratedCopy('');
+    
+    const text = await generateSmartCopy(product.name, product.customRetailPrice, product.currency, product.description);
+    setGeneratedCopy(text);
+    setIsGenerating(false);
+  };
+
+  const handleSmartPrice = async (product: StoreProduct) => {
+    setIsGenerating(true);
+    setPriceModalOpen(true);
+    setPriceSuggestion(null);
+
+    // Mock zone selection for demo
+    const suggestion = await getSmartPriceSuggestion(product.id, product.priceWholesale, 'Playa');
+    setPriceSuggestion(suggestion);
+    setIsGenerating(false);
+  };
+
+  const applySuggestedPrice = () => {
+    if (priceSuggestion) {
+      handlePriceChange(priceSuggestion.productId, priceSuggestion.suggestedPrice.toString());
+      setPriceModalOpen(false);
+    }
   };
 
   const renderConfig = () => (
@@ -289,6 +326,7 @@ const StoreManager: React.FC = () => {
                     <th className="px-4 py-3">Costo (Mayorista)</th>
                     <th className="px-4 py-3 w-40">Tu Precio (Retail)</th>
                     <th className="px-4 py-3">Tu Ganancia</th>
+                    <th className="px-4 py-3">Herramientas IA</th>
                     <th className="px-4 py-3">Estado</th>
                     <th className="px-4 py-3 text-right">Acciones</th>
                   </tr>
@@ -326,6 +364,24 @@ const StoreManager: React.FC = () => {
                         <div className="text-[10px] text-slate-400">Margen: {Math.round((product.profitMargin / product.priceWholesale) * 100)}%</div>
                       </td>
                       <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                           <button 
+                             onClick={() => handleGenerateCopy(product)}
+                             className="p-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors"
+                             title="Generar Copy de Venta"
+                           >
+                             <Wand2 size={16} />
+                           </button>
+                           <button 
+                             onClick={() => handleSmartPrice(product)}
+                             className="p-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors"
+                             title="Sugerir Precio IA"
+                           >
+                             <Calculator size={16} />
+                           </button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
                         <button 
                           onClick={() => toggleProductActive(product.id)}
                           className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-bold uppercase ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-500'}`}
@@ -344,6 +400,72 @@ const StoreManager: React.FC = () => {
             </div>
           )}
        </div>
+
+       {/* Copy Generator Modal */}
+       {copyModalOpen && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCopyModalOpen(false)}></div>
+           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg z-10 animate-in fade-in zoom-in duration-200">
+              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-indigo-50">
+                 <h3 className="font-bold text-indigo-900 flex items-center gap-2">
+                    <Wand2 size={20} /> Generador de Copy (Revolico)
+                 </h3>
+                 <button onClick={() => setCopyModalOpen(false)}><X size={20} className="text-indigo-400"/></button>
+              </div>
+              <div className="p-6">
+                 {isGenerating ? (
+                   <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                      <Wand2 className="animate-spin mb-4 text-indigo-500" size={32} />
+                      <p>Creando el texto perfecto para Cuba...</p>
+                   </div>
+                 ) : (
+                   <>
+                     <textarea 
+                        className="w-full h-48 border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none font-mono bg-slate-50"
+                        value={generatedCopy}
+                        readOnly
+                     />
+                     <div className="mt-4 flex gap-3">
+                       <button onClick={() => {navigator.clipboard.writeText(generatedCopy); setCopyModalOpen(false)}} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700">Copiar Texto</button>
+                     </div>
+                   </>
+                 )}
+              </div>
+           </div>
+         </div>
+       )}
+
+       {/* Smart Price Modal */}
+       {priceModalOpen && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setPriceModalOpen(false)}></div>
+           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md z-10 animate-in fade-in zoom-in duration-200">
+              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-green-50">
+                 <h3 className="font-bold text-green-900 flex items-center gap-2">
+                    <Calculator size={20} /> Precio Inteligente (Zona Playa)
+                 </h3>
+                 <button onClick={() => setPriceModalOpen(false)}><X size={20} className="text-green-600"/></button>
+              </div>
+              <div className="p-6">
+                 {isGenerating ? (
+                   <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                      <Calculator className="animate-bounce mb-4 text-green-500" size={32} />
+                      <p>Calculando markup por zona...</p>
+                   </div>
+                 ) : priceSuggestion ? (
+                   <div className="text-center">
+                     <p className="text-sm text-slate-500 mb-2">Precio Sugerido:</p>
+                     <div className="text-4xl font-bold text-slate-900 mb-4">{priceSuggestion.suggestedPrice}</div>
+                     <div className="bg-slate-50 p-3 rounded-lg text-xs text-slate-600 mb-6 border border-slate-200 text-left">
+                        <strong>Por qué:</strong> {priceSuggestion.reasoning}
+                     </div>
+                     <button onClick={applySuggestedPrice} className="w-full bg-green-600 text-white py-2.5 rounded-lg font-bold hover:bg-green-700">Aplicar Precio</button>
+                   </div>
+                 ) : null}
+              </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 

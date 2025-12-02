@@ -198,3 +198,27 @@ export interface Payout {
   status: PayoutStatus;
   pendingOrders: number;
 }
+
+// Interfaces IA
+export interface AIPrediction {
+  productId: string;
+  productName: string;
+  currentStock: number;
+  burnRatePerDay: number; // Ventas diarias promedio
+  daysUntilStockout: number;
+  recommendation: 'RESTOCK_NOW' | 'NORMAL' | 'OVERSTOCK';
+}
+
+export interface AIPriceSuggestion {
+  productId: string;
+  suggestedPrice: number;
+  reasoning: string;
+  zoneMultiplier: number;
+}
+
+export interface FraudAnalysis {
+  orderId: string;
+  riskScore: number; // 0-100
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  flags: string[];
+}
