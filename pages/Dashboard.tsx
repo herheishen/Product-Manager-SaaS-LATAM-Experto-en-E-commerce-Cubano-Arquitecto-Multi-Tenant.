@@ -1,0 +1,202 @@
+
+import React, { useEffect, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getResellerKPIs, getOrders, getPlanLimits } from '../services/api';
+import { KPI, Order, OrderStatus, PlanTier } from '../types';
+import { TrendingUp, TrendingDown, Package, Zap, ArrowRight, DollarSign } from 'lucide-react';
+
+const Dashboard: React.FC = () => {
+  const [kpis, setKpis] = useState<KPI[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Simulated User Plan State
+  const currentPlan = PlanTier.FREE;
+  const limits = getPlanLimits(currentPlan);
+  const usage = { products: 12, orders: 4 }; // Mock usage approaching limits
+
+  const chartData = [
+    { name: 'Lun', sales: 400, commission: 80 },
+    { name: 'Mar', sales: 300, commission: 60 },
+    { name: 'Mie', sales: 200, commission: 40 },
+    { name: 'Jue', sales: 278, commission: 55 },
+    { name: 'Vie', sales: 189, commission: 35 },
+    { name: 'Sab', sales: 639, commission: 120 },
+    { name: 'Dom', sales: 349, commission: 70 },
+  ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const kpiData = await getResellerKPIs();
+      const orderData = await getOrders();
+      setKpis(kpiData);
+      setRecentOrders(orderData.slice(0, 5));
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="flex h-64 items-center justify-center text-slate-500 font-medium">Cargando tu Kiosko...</div>;
+
+  return (
+    <div className="space-y-6">
+      {/* Plan Status Banner (Freemium Strategy) */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-6 text-white shadow-xl relative overflow-hidden border border-slate-700">
+        <div className="absolute -top-6 -right-6 p-4 opacity-5 rotate-12">
+          <Zap size={180} />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="bg-sky-500 text-xs font-bold px-2 py-0.5 rounded text-white uppercase tracking-wider shadow-sm">Plan {currentPlan}</span>
+              <span className="text-slate-400 text-xs font-medium">Tu suscripción actual</span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight">Impulsa tus ventas en Cuba</h2>
+            <p className="text-slate-300 text-sm mt-1 max-w-lg">
+              Estás cerca del límite de productos. Pásate al plan PRO para vender sin límites y usar tu propio dominio .cu
+            </p>
+          </div>
+          
+          <div className="w-full md:w-72 bg-slate-800/80 rounded-lg p-4 backdrop-blur-md border border-slate-600 shadow-lg">
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-xs mb-1.5 font-medium">
+                  <span className="text-slate-300">Productos Activos</span>
+                  <span className={usage.products >= limits.maxProducts ? "text-orange-400" : "text-sky-400"}>
+                    {usage.products} / {limits.maxProducts}
+                  </span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-500 ${usage.products >= limits.maxProducts ? 'bg-orange-500' : 'bg-sky-500'}`} 
+                    style={{ width: `${(usage.products / limits.maxProducts) * 100}%` }}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between text-xs mb-1.5 font-medium">
+                  <span className="text-slate-300">Pedidos este Mes</span>
+                  <span className="text-green-400">{usage.orders} / {limits.maxOrdersPerMonth}</span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-green-500 rounded-full transition-all duration-500" 
+                    style={{ width: `${(usage.orders / limits.maxOrdersPerMonth) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <button className="w-full mt-4 py-2 bg-sky-600 hover:bg-sky-500 text-xs font-bold rounded text-white transition-all flex items-center justify-center shadow-md">
+              <Zap size={14} className="mr-1.5 fill-current" /> MEJORAR AHORA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {kpis.map((kpi, index) => (
+          <div key={index} className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between z-10 relative">
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{kpi.label}</p>
+                <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{kpi.value}</h3>
+                {kpi.subtext && <p className="text-xs text-slate-400 mt-1 font-medium">{kpi.subtext}</p>}
+              </div>
+              <div className={`p-3 rounded-full ${kpi.isPositive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                {kpi.isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm relative z-10">
+              <span className={`${kpi.isPositive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} font-bold px-2 py-0.5 rounded text-xs`}>
+                {kpi.isPositive ? '+' : ''}{kpi.trend}%
+              </span>
+              <span className="text-slate-400 ml-2 text-xs">vs mes anterior</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2 min-w-0">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">Rendimiento Financiero</h3>
+              <p className="text-xs text-slate-400">Ventas vs Comisiones (USD eq)</p>
+            </div>
+            <select className="text-xs border border-slate-200 rounded-lg text-slate-600 px-2 py-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <option>Últimos 7 días</option>
+              <option>Este Mes</option>
+            </select>
+          </div>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <BarChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <Tooltip 
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
+                />
+                <Bar dataKey="sales" name="Venta Total" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
+                <Bar dataKey="commission" name="Tu Ganancia" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Recent Orders List - Compact */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col min-w-0">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-slate-800">Pedidos Recientes</h3>
+            <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full font-bold">{recentOrders.length}</span>
+          </div>
+          
+          <div className="space-y-3 flex-1 overflow-auto pr-1 custom-scrollbar">
+            {recentOrders.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 text-sm">No hay pedidos aún.</div>
+            ) : (
+              recentOrders.map((order) => (
+                <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-sky-100 hover:bg-sky-50 transition-all cursor-pointer group">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className="p-2.5 bg-slate-50 rounded-lg group-hover:bg-white transition-colors border border-slate-100">
+                      <Package size={16} className="text-slate-400 group-hover:text-sky-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate">{order.customerName}</p>
+                      <p className="text-[10px] text-slate-500 truncate text-ellipsis">{order.items[0]?.productName}</p>
+                    </div>
+                  </div>
+                  <div className="text-right pl-2">
+                    <div className="flex items-center justify-end text-sm font-bold text-slate-900">
+                      <span>{order.currency === 'USD' ? '$' : ''}{order.total}</span>
+                      <span className="text-[10px] text-slate-400 ml-1 font-normal">{order.currency}</span>
+                    </div>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase mt-1 ${
+                      order.status === OrderStatus.CONFIRMED ? 'bg-green-100 text-green-700' :
+                      order.status === OrderStatus.PENDING ? 'bg-amber-100 text-amber-700' :
+                      order.status === OrderStatus.DELIVERED ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {order.status === OrderStatus.CONFIRMED ? 'Confirmado' : order.status === OrderStatus.PENDING ? 'Pendiente' : 'Entregado'}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <button className="w-full py-3 mt-4 text-sm text-slate-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors flex items-center justify-center">
+            Ver Todos <ArrowRight size={16} className="ml-2" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;

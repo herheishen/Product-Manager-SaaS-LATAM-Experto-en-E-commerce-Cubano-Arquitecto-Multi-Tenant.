@@ -1,0 +1,5 @@
+{
+  "name": "KioskoCubano SaaS",
+  "description": "Plataforma SaaS multi-tenant diseñada para el mercado cubano. Conecta proveedores con revendedores (gestores) sin capital inicial. Incluye gestión de inventario, marketplace interno, integración con WhatsApp y métricas financieras en tiempo real.",
+  "requestFramePermissions": []
+}
