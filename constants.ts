@@ -1,4 +1,3 @@
-
 import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity, Zap, ClipboardList } from 'lucide-react';
 
 export const APP_NAME = "Kiosko.cu";
@@ -17,32 +16,34 @@ export const MUNICIPIOS_HABANA = [
 export const NAVIGATION_ITEMS = {
   RESELLER: [
     { name: 'Dashboard', icon: ChartColumn, path: '/' },
-    { name: 'Mercado (Dropshipping)', icon: ShoppingBag, path: '/marketplace' },
+    { name: 'Mercado', icon: ShoppingBag, path: '/marketplace' },
     { name: 'Mi Tienda', icon: Settings, path: '/my-store' },
     { name: 'Pedidos', icon: Package, path: '/orders' },
-    { name: 'Planes y Facturación', icon: Zap, path: '/subscription' },
+    { name: 'Suscripción', icon: Zap, path: '/subscription' },
   ],
   SUPPLIER: [
     { name: 'Dashboard', icon: ChartColumn, path: '/' },
     { name: 'Inventario', icon: Package, path: '/inventory' },
-    { name: 'Despacho y Envíos', icon: ClipboardList, path: '/dispatch' },
-    { name: 'Gestores Activos', icon: Users, path: '/resellers' },
+    { name: 'Despacho', icon: ClipboardList, path: '/dispatch' },
+    { name: 'Gestores', icon: Users, path: '/resellers' },
     { name: 'Finanzas', icon: DollarSign, path: '/finance' },
   ],
   ADMIN: [
-    { name: 'Control Maestro', icon: Activity, path: '/' },
-    { name: 'Proveedores (KYC)', icon: ShieldCheck, path: '/admin/suppliers' },
-    { name: 'Logística Global', icon: Truck, path: '/admin/logistics' },
-    { name: 'Finanzas SaaS', icon: DollarSign, path: '/admin/finance' },
+    { name: 'Control', icon: Activity, path: '/' },
+    { name: 'Proveedores', icon: ShieldCheck, path: '/admin/suppliers' },
+    { name: 'Logística', icon: Truck, path: '/admin/logistics' },
+    { name: 'Finanzas', icon: DollarSign, path: '/admin/finance' },
   ]
 };
 
 export const COLORS = {
   primary: '#0f172a', // Slate 900
-  secondary: '#0ea5e9', // Sky 500
-  accent: '#22c55e', // Green 500 (Money/Success)
-  warning: '#f59e0b', // Amber 500
-  error: '#ef4444', // Red 500
+  secondary: '#64748b', // Slate 500
+  accent: '#4f46e5', // Indigo 600
+  success: '#059669', // Emerald 600
+  warning: '#d97706', // Amber 600
+  error: '#e11d48', // Rose 600
   background: '#f8fafc',
-  surface: '#ffffff'
+  surface: '#ffffff',
+  border: '#e2e8f0'
 };

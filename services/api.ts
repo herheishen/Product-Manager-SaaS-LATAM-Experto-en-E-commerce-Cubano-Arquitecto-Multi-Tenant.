@@ -1,270 +1,217 @@
 
 import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails, Notification, NotificationType, AIPrediction, AIPriceSuggestion, FraudAnalysis, Challenge } from '../types';
 
-// Mock Data - Mercado Cubano Realista (Combos, Aseo, Electrónica)
+// --- DATA SEEDING (REAL CUBAN MARKET) ---
+
 const MOCK_PRODUCTS: Product[] = [
   {
-    id: 'p1',
-    name: 'Combo de Aseo Familiar (Detergente + Jabón + Pasta)',
-    description: 'Incluye 2kg de detergente, 5 jabones de baño y 2 pastas dentales. Importado.',
-    priceRetail: 2500,
-    priceWholesale: 1900,
+    id: 'p-jabon',
+    name: 'Jabón Perla (Paquete 5u)',
+    description: 'Jabón de lavar original. Aroma limón. Ideal para reventa en bodegas.',
+    priceRetail: 450,
+    priceWholesale: 320,
     currency: 'CUP',
-    stock: 50,
-    supplierId: 's2',
-    supplierName: 'Abastos Habana',
-    category: 'Combos',
-    imageUrl: 'https://images.unsplash.com/photo-1583947581924-860b81593810?auto=format&fit=crop&q=80&w=300',
+    stock: 200,
+    supplierId: 's-ferre',
+    supplierName: 'FerrePro Santiago',
+    category: 'Aseo',
+    imageUrl: 'https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?auto=format&fit=crop&q=80&w=300',
     isHot: true,
-    qualityScore: 98,
-    supplierReputation: {
-      fulfillmentRate: 99,
-      dispatchTimeHours: 24,
-      verified: true,
-      trustScore: 95
-    }
-  },
-  {
-    id: 'p2',
-    name: 'Zapatillas Nike Air Force 1 (Replica AAA)',
-    description: 'Calidad top. Tallas 36-44. Caja incluida. Garantía de 7 días por defecto.',
-    priceRetail: 55,
-    priceWholesale: 35,
-    currency: 'USD',
-    stock: 12,
-    supplierId: 's1',
-    supplierName: 'Importadora Vedado',
-    category: 'Calzado',
-    imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=300',
-    isHot: true,
+    minQuantity: 5,
     qualityScore: 95,
     supplierReputation: {
-      fulfillmentRate: 92,
+      fulfillmentRate: 98,
       dispatchTimeHours: 48,
       verified: true,
-      trustScore: 88
+      trustScore: 92
     }
   },
   {
-    id: 'p3',
-    name: 'Split Royal 1T Inverter 220V',
-    description: 'Nuevo en caja. Transporte incluido en La Habana. Instalación no incluida.',
-    priceRetail: 420,
-    priceWholesale: 360,
+    id: 'p-arroz',
+    name: 'Arroz Importado 5kg (Brasil)',
+    description: 'Grano entero, 95% libre de impurezas. Saco sellado.',
+    priceRetail: 1800,
+    priceWholesale: 1450,
+    currency: 'CUP',
+    stock: 50,
+    supplierId: 's-parque',
+    supplierName: 'La Tienda del Parque',
+    category: 'Alimentos',
+    imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=300',
+    isHot: true,
+    qualityScore: 99,
+    supplierReputation: {
+      fulfillmentRate: 100,
+      dispatchTimeHours: 24,
+      verified: true,
+      trustScore: 96
+    }
+  },
+  {
+    id: 'p-plancha',
+    name: 'Plancha Eléctrica Holstein',
+    description: 'Anti-adherente. 110V. Garantía de 30 días con el proveedor.',
+    priceRetail: 35,
+    priceWholesale: 24,
     currency: 'USD',
-    stock: 5,
-    supplierId: 's1',
-    supplierName: 'Electro Import',
+    stock: 12,
+    supplierId: 's-tech',
+    supplierName: 'TechCuba Import',
     category: 'Electrodomésticos',
-    imageUrl: 'https://images.unsplash.com/photo-1585642686001-2a9443597c55?auto=format&fit=crop&q=80&w=300',
+    imageUrl: 'https://images.unsplash.com/photo-1543472810-749eb3355554?auto=format&fit=crop&q=80&w=300',
     qualityScore: 90,
     supplierReputation: {
-        fulfillmentRate: 85,
-        dispatchTimeHours: 72,
+        fulfillmentRate: 88,
+        dispatchTimeHours: 24,
         verified: true,
-        trustScore: 82
+        trustScore: 85
     }
   },
   {
-    id: 'p4',
-    name: 'Aceite de Girasol (Caja 15L)',
-    description: 'Formato mayorista. Ideal para revender por botella o para cafeterías.',
-    priceRetail: 12000,
-    priceWholesale: 9500,
-    currency: 'CUP',
-    stock: 20,
-    supplierId: 's3',
-    supplierName: 'Distribuidora Local',
-    category: 'Alimentos',
-    imageUrl: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=300',
-    minQuantity: 1,
+    id: 'p-filtro',
+    name: 'Filtro de Agua Doméstico',
+    description: 'Cerámica y carbón activado. Incluye adaptador para pila.',
+    priceRetail: 15,
+    priceWholesale: 9,
+    currency: 'USD',
+    stock: 40,
+    supplierId: 's-ferre',
+    supplierName: 'FerrePro Santiago',
+    category: 'Hogar',
+    imageUrl: 'https://images.unsplash.com/photo-1598209279122-8541213a0383?auto=format&fit=crop&q=80&w=300',
     qualityScore: 85,
     supplierReputation: {
-        fulfillmentRate: 80,
-        dispatchTimeHours: 24,
-        verified: false,
-        trustScore: 65
-    }
-  },
-  {
-    id: 'p5',
-    name: 'Powerbank Xiaomi 20000mAh (Original)',
-    description: 'Carga rápida 18W. Indispensable para apagones. Varios colores.',
-    priceRetail: 35,
-    priceWholesale: 22,
-    currency: 'USD',
-    stock: 25,
-    supplierId: 's1',
-    supplierName: 'TecnoStore Cuba',
-    category: 'Electrónica',
-    imageUrl: 'https://images.unsplash.com/photo-1609592425026-c27702581639?auto=format&fit=crop&q=80&w=300',
-    qualityScore: 92,
-    supplierReputation: {
-        fulfillmentRate: 94,
-        dispatchTimeHours: 12,
+        fulfillmentRate: 98,
+        dispatchTimeHours: 48,
         verified: true,
-        trustScore: 91
+        trustScore: 92
     }
   },
   {
-    id: 'p6',
-    name: 'Picadillo de Pavo (Tubo 400g)',
-    description: 'Congelado. Venta mínima 10 tubos. Recogida en almacén o mensajería refrigerada.',
-    priceRetail: 220,
-    priceWholesale: 150,
+    id: 'p-aceite',
+    name: 'Aceite de Girasol (1 Litro)',
+    description: 'Botella sellada. Marca Golden Chef o similar según disponibilidad.',
+    priceRetail: 750,
+    priceWholesale: 580,
     currency: 'CUP',
-    stock: 500,
-    supplierId: 's2',
-    supplierName: 'Abastos Habana',
+    stock: 150,
+    supplierId: 's-parque',
+    supplierName: 'La Tienda del Parque',
     category: 'Alimentos',
-    imageUrl: 'https://images.unsplash.com/photo-1594511877685-64de855d0452?auto=format&fit=crop&q=80&w=300',
-    qualityScore: 88,
+    imageUrl: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=300',
+    qualityScore: 94,
     supplierReputation: {
-        fulfillmentRate: 99,
+        fulfillmentRate: 100,
         dispatchTimeHours: 24,
         verified: true,
-        trustScore: 95
-    }
-  },
-  {
-    id: 'p7',
-    name: 'Cerveza Cristal (Caja 24u)',
-    description: 'Producto nacional. Entrega inmediata en Playa y Marianao.',
-    priceRetail: 4800,
-    priceWholesale: 4200,
-    currency: 'CUP',
-    stock: 100,
-    supplierId: 's3',
-    supplierName: 'Distribuidora Local',
-    category: 'Alimentos',
-    imageUrl: 'https://images.unsplash.com/photo-1606859188014-d67b209e5306?auto=format&fit=crop&q=80&w=300',
-    qualityScore: 40, // Low quality score example (spammy post)
-    supplierReputation: {
-        fulfillmentRate: 60,
-        dispatchTimeHours: 96,
-        verified: false,
-        trustScore: 45
+        trustScore: 96
     }
   }
 ];
 
 const MOCK_ORDERS: Order[] = [
   {
-    id: 'ord-001',
+    id: 'ord-1024',
     customerName: 'Yusimí González',
     customerPhone: '+53 52991234',
-    total: 55,
+    total: 35,
     currency: 'USD',
     status: OrderStatus.CONFIRMED,
     date: '2023-10-25',
-    items: [{ productId: 'p2', quantity: 1, productName: 'Zapatillas Nike AF1', price: 55 }],
-    commission: 20,
+    items: [{ productId: 'p-plancha', quantity: 1, productName: 'Plancha Eléctrica', price: 35 }],
+    commission: 11,
     deliveryMethod: 'DELIVERY',
     deliveryAddress: 'Calle 23 e/ L y M, Vedado',
-    supplierId: 's1' // Linked to mock supplier
+    supplierId: 's-tech'
   },
   {
-    id: 'ord-002',
+    id: 'ord-1025',
     customerName: 'Cafetería "El Paso"',
     customerPhone: '+53 58112233',
-    total: 12000,
+    total: 3600,
     currency: 'CUP',
     status: OrderStatus.DELIVERED,
     date: '2023-10-24',
-    items: [{ productId: 'p4', quantity: 1, productName: 'Aceite Girasol Caja 15L', price: 12000 }],
-    commission: 2500,
+    items: [{ productId: 'p-arroz', quantity: 2, productName: 'Arroz Importado 5kg', price: 1800 }],
+    commission: 700,
     deliveryMethod: 'PICKUP',
     deliveryAddress: 'Almacén Central',
-    supplierId: 's3'
+    supplierId: 's-parque'
   },
   {
-    id: 'ord-003',
+    id: 'ord-1026',
     customerName: 'Carlos M.',
     customerPhone: '+53 54667788',
-    total: 35,
-    currency: 'USD',
+    total: 4500,
+    currency: 'CUP',
     status: OrderStatus.PENDING,
     date: '2023-10-26',
-    items: [{ productId: 'p5', quantity: 1, productName: 'Powerbank Xiaomi', price: 35 }],
-    commission: 13,
+    items: [{ productId: 'p-jabon', quantity: 10, productName: 'Jabón Perla', price: 450 }],
+    commission: 1300,
     deliveryMethod: 'DELIVERY',
     deliveryAddress: 'Ave 51, Marianao',
-    supplierId: 's1'
-  },
-  {
-    id: 'ord-004',
-    customerName: 'Maria Elena',
-    customerPhone: '+53 55554444',
-    total: 420,
-    currency: 'USD',
-    status: OrderStatus.READY_FOR_PICKUP,
-    date: '2023-10-26',
-    items: [{ productId: 'p3', quantity: 1, productName: 'Split Royal 1T', price: 420 }],
-    commission: 60,
-    deliveryMethod: 'DELIVERY',
-    deliveryAddress: 'Playa, Calle 1ra',
-    supplierId: 's1'
+    supplierId: 's-ferre'
   }
 ];
 
-// Admin Mock Data
+// Admin Mock Data - Real Suppliers
 const MOCK_SUPPLIER_REQUESTS: SupplierRequest[] = [
   {
-    id: 'req-01',
-    businessName: 'Bodega Vedado Import',
-    legalType: 'MIPYME',
-    address: 'Calle 23 e/ L y M, Vedado, Plaza',
-    ownerName: 'Roberto Pérez',
-    phone: '+53 55551111',
-    documentId: '89101022334',
-    status: SupplierStatus.PENDING,
-    registeredDate: '2023-10-26',
-    inventoryCount: 150
-  },
-  {
-    id: 'req-02',
-    businessName: 'MIPYME "El Habanero"',
+    id: 'req-parque',
+    businessName: 'La Tienda del Parque',
     legalType: 'TCP',
-    address: 'Ave 51, Marianao',
-    ownerName: 'Maria Rodríguez',
-    phone: '+53 12345678', // Invalid phone for test
-    documentId: '75050599887',
-    status: SupplierStatus.PENDING,
-    registeredDate: '2023-10-25',
-    inventoryCount: 45
+    address: 'Calle 30, Playa, La Habana',
+    ownerName: 'Juan Carlos Silva',
+    phone: '+53 52223344',
+    documentId: '85010122334',
+    status: SupplierStatus.VERIFIED,
+    registeredDate: '2023-09-10',
+    inventoryCount: 450
   },
   {
-    id: 'req-03',
-    businessName: 'TechnoCell 23',
+    id: 'req-ferre',
+    businessName: 'FerrePro Santiago',
     legalType: 'MIPYME',
-    address: 'Calle G, Vedado',
+    address: 'Vista Alegre, Santiago de Cuba',
+    ownerName: 'Marta Elena R.',
+    phone: '+53 58889900',
+    documentId: '90121266778',
+    status: SupplierStatus.VERIFIED,
+    registeredDate: '2023-09-15',
+    inventoryCount: 1200
+  },
+  {
+    id: 'req-tech',
+    businessName: 'TechCuba Import',
+    legalType: 'MIPYME',
+    address: 'Miramar, Playa',
     ownerName: 'Alejandro G.',
     phone: '+53 59990000',
     documentId: '95121266778',
-    status: SupplierStatus.VERIFIED,
+    status: SupplierStatus.PENDING,
     registeredDate: '2023-10-20',
-    inventoryCount: 300
+    inventoryCount: 50
   }
 ];
 
 const MOCK_PAYOUTS: Payout[] = [
   {
-    id: 'pay-01',
-    supplierName: 'Importadora Vedado',
-    amount: 350,
-    currency: 'USD',
-    period: 'Semana 42 - Oct',
-    status: PayoutStatus.UNPAID,
-    pendingOrders: 12
-  },
-  {
-    id: 'pay-02',
-    supplierName: 'Abastos Habana',
-    amount: 45000,
+    id: 'pay-001',
+    supplierName: 'FerrePro Santiago',
+    amount: 15000,
     currency: 'CUP',
     period: 'Semana 42 - Oct',
+    status: PayoutStatus.UNPAID,
+    pendingOrders: 8
+  },
+  {
+    id: 'pay-002',
+    supplierName: 'La Tienda del Parque',
+    amount: 240,
+    currency: 'USD',
+    period: 'Semana 42 - Oct',
     status: PayoutStatus.PROCESSING,
-    pendingOrders: 5
+    pendingOrders: 0
   }
 ];
 
@@ -273,68 +220,48 @@ const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: 'n1',
     type: NotificationType.STOCK_ALERT,
-    title: '⚠️ Stock Bajo: Powerbank Xiaomi',
-    message: 'El proveedor "TecnoStore Cuba" solo tiene 3 unidades. Si vendes ahora podría fallar.',
-    date: 'Hace 10 min',
+    title: '⚠️ Stock Bajo: Filtro de Agua',
+    message: 'FerrePro reporta menos de 5 unidades. Considera pausar la venta.',
+    date: 'Hace 15 min',
     read: false,
     priority: 'HIGH',
-    relatedProductId: 'p5'
+    relatedProductId: 'p-filtro'
   },
   {
     id: 'n2',
     type: NotificationType.PRICE_CHANGE,
-    title: 'Cambio de Precio: Aceite Girasol',
-    message: 'Distribuidora Local bajó el costo a 9200 CUP. ¡Puedes mejorar tu margen!',
-    date: 'Hace 2 horas',
+    title: 'Baja de Precio: Jabón Perla',
+    message: 'Ahora a 320 CUP (antes 340). ¡Ajusta tu margen!',
+    date: 'Hace 1 hora',
     read: false,
     priority: 'MEDIUM',
-    relatedProductId: 'p4'
-  },
-  {
-    id: 'n3',
-    type: NotificationType.COMPLIANCE_WARNING,
-    title: 'Producto Eliminado',
-    message: 'Tu producto "Antibiótico Genérico" ha sido eliminado por violar las normas de venta.',
-    date: 'Ayer',
-    read: true,
-    priority: 'HIGH'
+    relatedProductId: 'p-jabon'
   }
 ];
 
-// Mock Challenges (Gamification)
+// Mock Challenges
 const MOCK_CHALLENGES: Challenge[] = [
   {
     id: 'c1',
-    title: 'Rey de las Ventas',
-    description: 'Vende 5 Combos de Aseo esta semana.',
-    target: 5,
-    current: 3,
-    reward: 'Comisión 0% en tu próximo retiro',
-    deadline: '2 días',
+    title: 'Iniciación',
+    description: 'Vende tu primer "Combo de Aseo".',
+    target: 1,
+    current: 0,
+    reward: 'Badge "Vendedor Novato"',
+    deadline: '7 días',
     type: 'SALES',
-    icon: 'FIRE'
-  },
-  {
-    id: 'c2',
-    title: 'Viral en WhatsApp',
-    description: 'Comparte tu tienda 10 veces en grupos.',
-    target: 10,
-    current: 8,
-    reward: 'Insignia "Tienda Popular"',
-    deadline: '5 horas',
-    type: 'SHARES',
     icon: 'ROCKET'
   },
   {
-    id: 'c3',
-    title: 'Vendedor Confiable',
-    description: 'Consigue 3 reseñas de 5 estrellas.',
-    target: 3,
-    current: 1,
-    reward: 'Acceso a Proveedores Premium',
-    deadline: '30 días',
-    type: 'REVIEWS',
-    icon: 'STAR'
+    id: 'c2',
+    title: 'Dominio de Redes',
+    description: 'Comparte 5 productos en Facebook.',
+    target: 5,
+    current: 2,
+    reward: 'Comisión reducida 2%',
+    deadline: '24 horas',
+    type: 'SHARES',
+    icon: 'FIRE'
   }
 ];
 
@@ -344,25 +271,18 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // --- CRITICAL VALIDATION LOGIC ---
 
 export const validateCubanCI = (ci: string): boolean => {
-  // Regex: 11 digits, strict date validation (Year 00-99, Month 01-12, Day 01-31)
-  // Simplified for MVP to digit count
   return /^\d{11}$/.test(ci);
 };
 
 export const validateCubanPhone = (phone: string): boolean => {
-  // ETECSA Format: +53 followed by 5 or 6, then 7 digits. Or just 535...
-  // Normalize: remove spaces, pluses
   const cleaned = phone.replace(/[^0-9]/g, '');
-  // Must match 53 + (5 or 6) + 7 digits = 10 digits total
   return /^53[56]\d{7}$/.test(cleaned);
 };
 
 export const checkProductCompliance = (name: string, description: string): { allowed: boolean, reason?: string } => {
   const forbiddenKeywords = ['antibiotico', 'azitromicina', 'dolar', 'euro', 'mlc', 'droga', 'arma'];
   const text = (name + ' ' + description).toLowerCase();
-  
   for (const word of forbiddenKeywords) {
-    // Check whole word match or significant part
     if (text.includes(word)) {
       return { allowed: false, reason: `Contiene término prohibido: "${word}"` };
     }
@@ -370,82 +290,7 @@ export const checkProductCompliance = (name: string, description: string): { all
   return { allowed: true };
 };
 
-// --- AI SERVICES (Simulated) ---
-
-export const generateSmartCopy = async (productName: string, price: number, currency: string, description: string): Promise<string> => {
-  await delay(600);
-  const emojis = ['🔥', '📦', '🚀', '👀', '🇨🇺', '💸', '🚨'];
-  const openers = ['¡Se acaba la espera!', 'Oportunidad única mi gente', 'Acabado de llegar', 'Lo que buscabas'];
-  const closers = ['¡Escribe ya!', 'Pocas unidades', 'Mensajería a toda La Habana'];
-  
-  const random = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
-  
-  return `${random(emojis)} *${productName.toUpperCase()}* ${random(emojis)}\n\n${description}\n\n💰 *Precio: ${price} ${currency}*\n\n✅ ${random(closers)}\n📍 Pedidos al WhatsApp`;
-};
-
-export const getInventoryPredictions = async (): Promise<AIPrediction[]> => {
-  await delay(800);
-  // Simulate prediction based on mock products
-  return MOCK_PRODUCTS.slice(0, 3).map(p => ({
-    productId: p.id,
-    productName: p.name,
-    currentStock: p.stock,
-    burnRatePerDay: Math.floor(Math.random() * 3) + 1, // Random sales velocity
-    daysUntilStockout: Math.floor(p.stock / (Math.random() * 2 + 1)),
-    recommendation: p.stock < 10 ? 'RESTOCK_NOW' : 'NORMAL'
-  }));
-};
-
-export const getSmartPriceSuggestion = async (productId: string, basePrice: number, zone: string): Promise<AIPriceSuggestion> => {
-  await delay(500);
-  // Heuristic: Wealthier zones (Playa, Vedado) tolerate higher markups
-  const highIncomeZones = ['Playa', 'Plaza de la Revolución'];
-  const isHighIncome = highIncomeZones.includes(zone);
-  const multiplier = isHighIncome ? 1.35 : 1.20;
-  const suggested = Math.round(basePrice * multiplier);
-  
-  return {
-    productId,
-    suggestedPrice: suggested,
-    zoneMultiplier: multiplier,
-    reasoning: isHighIncome 
-      ? `Zona de alta demanda (${zone}). Puedes aumentar el margen un 35%.` 
-      : `Zona estándar (${zone}). Se recomienda margen moderado del 20% para rotación rápida.`
-  };
-};
-
-export const analyzeFraudRisk = async (orderTotal: number, customerPhone: string): Promise<FraudAnalysis> => {
-  await delay(300);
-  // Simple heuristic
-  const isHighValue = orderTotal > 200; // USD
-  const isVoIP = !validateCubanPhone(customerPhone);
-  
-  const flags = [];
-  if (isHighValue) flags.push('Monto inusualmente alto');
-  if (isVoIP) flags.push('Número de teléfono sospechoso');
-  
-  const score = (isHighValue ? 40 : 0) + (isVoIP ? 50 : 0);
-  
-  return {
-    orderId: 'temp',
-    riskScore: score,
-    riskLevel: score > 70 ? 'HIGH' : score > 30 ? 'MEDIUM' : 'LOW',
-    flags
-  };
-};
-
-// Gamification Services
-export const getActiveChallenges = async (): Promise<Challenge[]> => {
-  await delay(400);
-  return MOCK_CHALLENGES;
-};
-
-export const generateSocialAsset = async (productId: string, type: 'STORY' | 'POST'): Promise<string> => {
-  await delay(1500); // Simulate processing time
-  return "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=600&auto=format&fit=crop"; // Placeholder
-};
-
-// Services
+// --- SERVICES ---
 
 export const getProducts = async (): Promise<Product[]> => {
   await delay(600);
@@ -454,7 +299,6 @@ export const getProducts = async (): Promise<Product[]> => {
 
 export const getOrders = async (): Promise<Order[]> => {
   await delay(500);
-  // Resellers see all mock orders in demo
   return MOCK_ORDERS; 
 };
 
@@ -465,15 +309,14 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus): P
 
 export const getSupplierOrders = async (): Promise<Order[]> => {
   await delay(500);
-  // Filter orders that would belong to 's1' (the mock logged-in supplier)
-  return MOCK_ORDERS.filter(o => o.supplierId === 's1');
+  return MOCK_ORDERS.filter(o => o.supplierId === 's-ferre'); // Mock logged in as FerrePro
 };
 
 export const getResellerKPIs = async (): Promise<KPI[]> => {
   return [
-    { label: 'Ganancia Neta (Mes)', value: '$128 USD', trend: 15.2, isPositive: true, subtext: '+ 4,500 CUP (Mixto)' },
-    { label: 'Pedidos Completados', value: '12', trend: 5, isPositive: true, subtext: '8 pendientes de cobro' },
-    { label: 'Tasa de Cierre', value: '65%', trend: -2, isPositive: false, subtext: 'WhatsApp Conversion' },
+    { label: 'Ganancia Neta', value: '4,500 CUP', trend: 15.2, isPositive: true, subtext: '+ $30 USD (Zelle)' },
+    { label: 'Pedidos Activos', value: '3', trend: 0, isPositive: true, subtext: '1 listo para entrega' },
+    { label: 'Visitas Tienda', value: '142', trend: -5, isPositive: false, subtext: 'Baja conversión hoy' },
   ];
 };
 
@@ -485,15 +328,7 @@ export const getPlanLimits = (tier: PlanTier): PlanLimits => {
         maxProducts: 25, 
         maxOrdersPerMonth: 10, 
         commissionRate: 0.05,
-        features: {
-          customDomain: false,
-          removeBranding: false,
-          advancedAnalytics: false,
-          apiAccess: false,
-          automatedPricing: false,
-          prioritySupport: false,
-          localDropshipping: false
-        }
+        features: { customDomain: false, removeBranding: false, advancedAnalytics: false, apiAccess: false, automatedPricing: false, prioritySupport: false, localDropshipping: false }
       };
     case PlanTier.PRO:
       return { 
@@ -501,15 +336,7 @@ export const getPlanLimits = (tier: PlanTier): PlanLimits => {
         maxProducts: 500, 
         maxOrdersPerMonth: 200, 
         commissionRate: 0.02,
-        features: {
-          customDomain: true,
-          removeBranding: true,
-          advancedAnalytics: true,
-          apiAccess: false,
-          automatedPricing: true,
-          prioritySupport: true,
-          localDropshipping: false
-        }
+        features: { customDomain: true, removeBranding: true, advancedAnalytics: true, apiAccess: false, automatedPricing: true, prioritySupport: true, localDropshipping: false }
       };
     case PlanTier.ULTRA:
       return { 
@@ -517,18 +344,9 @@ export const getPlanLimits = (tier: PlanTier): PlanLimits => {
         maxProducts: 9999, 
         maxOrdersPerMonth: 9999, 
         commissionRate: 0,
-        features: {
-          customDomain: true,
-          removeBranding: true,
-          advancedAnalytics: true,
-          apiAccess: true,
-          automatedPricing: true,
-          prioritySupport: true,
-          localDropshipping: true
-        }
+        features: { customDomain: true, removeBranding: true, advancedAnalytics: true, apiAccess: true, automatedPricing: true, prioritySupport: true, localDropshipping: true }
       };
-    default:
-      return getPlanLimits(PlanTier.FREE);
+    default: return getPlanLimits(PlanTier.FREE);
   }
 };
 
@@ -564,21 +382,16 @@ export const getSubscriptionPlans = async (): Promise<PlanDetails[]> => {
 
 export const getMyStoreProducts = async (): Promise<StoreProduct[]> => {
   await delay(500);
-  return MOCK_PRODUCTS.slice(0, 4).map((p, idx) => ({
+  return MOCK_PRODUCTS.slice(0, 3).map((p, idx) => ({
     ...p,
     customRetailPrice: p.priceRetail,
-    isActive: idx !== 2,
+    isActive: idx !== 1,
     addedAt: '2023-10-20',
     profitMargin: p.priceRetail - p.priceWholesale
   }));
 };
 
 export const updateStoreProductPrice = async (productId: string, newPrice: number): Promise<boolean> => {
-  await delay(300);
-  return true;
-};
-
-export const toggleProductStatus = async (productId: string, isActive: boolean): Promise<boolean> => {
   await delay(300);
   return true;
 };
@@ -593,14 +406,14 @@ export const getRecentNotifications = async (): Promise<Notification[]> => {
   return MOCK_NOTIFICATIONS;
 };
 
-// Admin Services
+// Admin & Other Services (Mock implementations)
 export const getAdminStats = async (): Promise<KPI[]> => {
   await delay(400);
   return [
-    { label: 'GMV (Volumen Total)', value: '$12.5k USD', trend: 22, isPositive: true, subtext: 'Mes actual' },
-    { label: 'Ingresos SaaS', value: '$850 USD', trend: 8, isPositive: true, subtext: 'Suscripciones Activas' },
-    { label: 'Proveedores Pendientes', value: '5', trend: 0, isPositive: false, subtext: 'Requieren Verificación' },
-    { label: 'Gestores Activos', value: '142', trend: 12, isPositive: true, subtext: '12 nuevos esta semana' },
+    { label: 'GMV (Volumen)', value: '$12.5k USD', trend: 22, isPositive: true, subtext: 'Mes actual' },
+    { label: 'Revenue SaaS', value: '$850 USD', trend: 8, isPositive: true, subtext: 'Suscripciones' },
+    { label: 'Proveedores', value: '3', trend: 1, isPositive: true, subtext: 'Verificados' },
+    { label: 'Gestores', value: '142', trend: 12, isPositive: true, subtext: 'Activos' },
   ];
 };
 
@@ -619,23 +432,63 @@ export const getPendingPayouts = async (): Promise<Payout[]> => {
   return MOCK_PAYOUTS;
 };
 
-// Supplier Services
 export const getSupplierStats = async (): Promise<KPI[]> => {
   await delay(300);
   return [
-    { label: 'Ventas Totales', value: '$840 USD', trend: 18, isPositive: true, subtext: 'Esta semana' },
-    { label: 'Inventario Valorizado', value: '$3,200 USD', trend: -5, isPositive: false, subtext: 'Necesita restock' },
-    { label: 'Revendedores Activos', value: '24', trend: 4, isPositive: true, subtext: 'Vendiendo tus productos' }
+    { label: 'Ventas Totales', value: '$2,400 USD', trend: 18, isPositive: true, subtext: 'Semana actual' },
+    { label: 'Inventario', value: '1,200 un.', trend: -2, isPositive: false, subtext: 'Stock total' },
+    { label: 'Revendedores', value: '15', trend: 4, isPositive: true, subtext: 'Vendiendo tus productos' }
   ];
 };
 
 export const getSupplierProducts = async (): Promise<Product[]> => {
   await delay(400);
-  // Filter mock products as if they belong to this supplier
-  return MOCK_PRODUCTS.slice(0, 5); 
+  return MOCK_PRODUCTS.filter(p => p.supplierId === 's-ferre'); 
 };
 
 export const createProduct = async (productData: any): Promise<boolean> => {
   await delay(1000);
   return true;
+};
+
+// AI Services
+export const generateSmartCopy = async (productName: string, price: number, currency: string, description: string): Promise<string> => {
+  await delay(600);
+  return `🔥 *${productName.toUpperCase()}* 🔥\n\n${description}\n\n💰 Precio: ${price} ${currency}\n📍 Entregas en toda La Habana\n🚀 ¡Escribe ya que se acaban!`;
+};
+
+export const getInventoryPredictions = async (): Promise<AIPrediction[]> => {
+  await delay(800);
+  return MOCK_PRODUCTS.slice(0, 3).map(p => ({
+    productId: p.id,
+    productName: p.name,
+    currentStock: p.stock,
+    burnRatePerDay: Math.floor(Math.random() * 5) + 1,
+    daysUntilStockout: Math.floor(p.stock / 2),
+    recommendation: p.stock < 10 ? 'RESTOCK_NOW' : 'NORMAL'
+  }));
+};
+
+export const getSmartPriceSuggestion = async (productId: string, basePrice: number, zone: string): Promise<AIPriceSuggestion> => {
+  await delay(500);
+  return {
+    productId,
+    suggestedPrice: Math.round(basePrice * 1.3),
+    reasoning: 'Margen sugerido del 30% para zona Playa.',
+    zoneMultiplier: 1.3
+  };
+};
+
+export const analyzeFraudRisk = async (orderTotal: number, customerPhone: string): Promise<FraudAnalysis> => {
+    return { orderId: 'x', riskScore: 10, riskLevel: 'LOW', flags: [] };
+};
+
+export const getActiveChallenges = async (): Promise<Challenge[]> => {
+  await delay(400);
+  return MOCK_CHALLENGES;
+};
+
+export const generateSocialAsset = async (productId: string, type: 'STORY' | 'POST'): Promise<string> => {
+  await delay(1000);
+  return MOCK_PRODUCTS.find(p => p.id === productId)?.imageUrl || '';
 };
