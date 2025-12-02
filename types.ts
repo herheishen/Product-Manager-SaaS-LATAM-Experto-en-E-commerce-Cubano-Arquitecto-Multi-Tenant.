@@ -222,3 +222,16 @@ export interface FraudAnalysis {
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   flags: string[];
 }
+
+// Gamification & Marketing
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  reward: string;
+  deadline: string;
+  type: 'SALES' | 'SHARES' | 'REVIEWS';
+  icon: 'FIRE' | 'TROPHY' | 'STAR' | 'ROCKET';
+}

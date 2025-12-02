@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Share2, Save, ExternalLink, MessageCircle, DollarSign, Wallet, Zap, Package, Edit2, Eye, EyeOff, Search, ArrowRight, Wand2, Calculator, X } from 'lucide-react';
+import { Share2, Save, ExternalLink, MessageCircle, DollarSign, Wallet, Zap, Package, Edit2, Eye, EyeOff, Search, ArrowRight, Wand2, Calculator, X, Rocket, Send, Copy, Image as ImageIcon, Download } from 'lucide-react';
 import { StoreConfig, PlanTier, StoreProduct, AIPriceSuggestion } from '../types';
-import { getMyStoreProducts, generateSmartCopy, getSmartPriceSuggestion } from '../services/api';
+import { getMyStoreProducts, generateSmartCopy, getSmartPriceSuggestion, generateSocialAsset } from '../services/api';
 
 const StoreManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'CONFIG' | 'CATALOG'>('CONFIG');
+  const [activeTab, setActiveTab] = useState<'CONFIG' | 'CATALOG' | 'MARKETING'>('CONFIG');
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   
@@ -16,6 +16,10 @@ const StoreManager: React.FC = () => {
   
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [priceSuggestion, setPriceSuggestion] = useState<AIPriceSuggestion | null>(null);
+
+  // Marketing States
+  const [assetGenerating, setAssetGenerating] = useState<string | null>(null);
+  const [generatedAssetUrl, setGeneratedAssetUrl] = useState<string | null>(null);
 
   const [config, setConfig] = useState<StoreConfig>({
     name: "Mi Kiosko Habana",
@@ -35,7 +39,7 @@ const StoreManager: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (activeTab === 'CATALOG') {
+    if (activeTab === 'CATALOG' || activeTab === 'MARKETING') {
       setLoadingProducts(true);
       getMyStoreProducts().then(data => {
         setProducts(data);
@@ -104,6 +108,13 @@ const StoreManager: React.FC = () => {
       handlePriceChange(priceSuggestion.productId, priceSuggestion.suggestedPrice.toString());
       setPriceModalOpen(false);
     }
+  };
+
+  const handleGenerateAsset = async (productId: string) => {
+    setAssetGenerating(productId);
+    const url = await generateSocialAsset(productId, 'STORY');
+    setGeneratedAssetUrl(url);
+    setAssetGenerating(null);
   };
 
   const renderConfig = () => (
@@ -400,8 +411,161 @@ const StoreManager: React.FC = () => {
             </div>
           )}
        </div>
+    </div>
+  );
 
-       {/* Copy Generator Modal */}
+  const renderMarketing = () => (
+    <div className="space-y-6">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Viraliza tu Tienda */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+             <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+               <Rocket className="text-sky-500" /> Viraliza tu Tienda
+             </h2>
+             <p className="text-sm text-slate-500 mb-6">Comparte el enlace de tu tienda en tus redes sociales favoritas para atraer clientes.</p>
+             
+             <div className="space-y-3">
+                <button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                  <MessageCircle size={20} /> Compartir en WhatsApp
+                </button>
+                <button className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                  <Send size={20} /> Compartir en Telegram
+                </button>
+                <div className="flex gap-2">
+                   <div className="flex-1 bg-slate-100 rounded-lg px-3 py-2 text-sm text-slate-600 truncate border border-slate-200">
+                      kiosko.cu/tienda-demo
+                   </div>
+                   <button className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300">
+                      <Copy size={20} />
+                   </button>
+                </div>
+             </div>
+
+             <div className="mt-6 pt-6 border-t border-slate-100">
+                <h3 className="font-bold text-sm text-slate-700 mb-2">Programa de Referidos</h3>
+                <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+                   <p className="text-xs text-indigo-700 mb-3">
+                     Gana <strong>$5 USD</strong> por cada amigo que cree su tienda y venda sus primeros 10 productos.
+                   </p>
+                   <button className="text-xs font-bold text-indigo-600 flex items-center hover:underline">
+                      Copiar Enlace de Referido <Copy size={12} className="ml-1"/>
+                   </button>
+                </div>
+             </div>
+          </div>
+
+          {/* Generador de Contenido */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+             <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+               <ImageIcon className="text-pink-500" /> Creador de Stories
+             </h2>
+             <p className="text-sm text-slate-500 mb-6">Crea imágenes promocionales para tus Estados de WhatsApp en segundos.</p>
+
+             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4 h-64 flex flex-col items-center justify-center">
+                {generatedAssetUrl ? (
+                   <div className="relative w-full h-full group">
+                      <img src={generatedAssetUrl} alt="Story Generated" className="w-full h-full object-cover rounded-lg" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                         <a href={generatedAssetUrl} download className="bg-white text-slate-900 px-4 py-2 rounded-full font-bold flex items-center gap-2 hover:scale-105 transition-transform">
+                            <Download size={18} /> Descargar
+                         </a>
+                      </div>
+                   </div>
+                ) : assetGenerating ? (
+                   <div className="text-center">
+                      <Wand2 className="animate-spin text-pink-500 mx-auto mb-3" size={32} />
+                      <p className="text-sm text-slate-500 font-medium">Diseñando tu Story...</p>
+                   </div>
+                ) : (
+                   <div className="text-center text-slate-400">
+                      <ImageIcon size={48} className="mx-auto mb-2 opacity-20" />
+                      <p className="text-sm">Selecciona un producto abajo</p>
+                   </div>
+                )}
+             </div>
+
+             <div>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Elige un Producto</label>
+                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                   {products.slice(0, 5).map(p => (
+                      <button 
+                        key={p.id}
+                        onClick={() => handleGenerateAsset(p.id)}
+                        disabled={!!assetGenerating}
+                        className="flex-shrink-0 w-16 h-16 rounded-lg border border-slate-200 relative overflow-hidden hover:ring-2 hover:ring-pink-500 transition-all"
+                      >
+                         <img src={p.imageUrl} className="w-full h-full object-cover" />
+                      </button>
+                   ))}
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6 pb-20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Gestión de Tienda</h1>
+          <p className="text-slate-500">Administra tu vitrina y catálogo de productos.</p>
+        </div>
+        
+        <div className="flex gap-2 w-full md:w-auto">
+          <a href="/store/preview" target="_blank" className="flex items-center justify-center px-4 py-2.5 border border-slate-300 text-slate-700 bg-white rounded-lg hover:bg-slate-50 transition-colors shadow-sm font-medium flex-1 md:flex-none">
+            <ExternalLink size={18} className="mr-2" /> Ver Tienda
+          </a>
+          <button 
+            onClick={handleSave}
+            className="flex items-center justify-center px-6 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors shadow-sm font-medium flex-1 md:flex-none"
+          >
+            {saving ? 'Guardando...' : <><Save size={18} className="mr-2" /> Guardar Todo</>}
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-slate-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('CONFIG')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'CONFIG'
+                ? 'border-sky-500 text-sky-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            Configuración General
+          </button>
+          <button
+            onClick={() => setActiveTab('CATALOG')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
+              activeTab === 'CATALOG'
+                ? 'border-sky-500 text-sky-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <Package size={16} className="mr-2" /> Mi Catálogo
+          </button>
+          <button
+            onClick={() => setActiveTab('MARKETING')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
+              activeTab === 'MARKETING'
+                ? 'border-sky-500 text-sky-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <Rocket size={16} className="mr-2" /> Marketing & Viral
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'CONFIG' && renderConfig()}
+      {activeTab === 'CATALOG' && renderCatalog()}
+      {activeTab === 'MARKETING' && renderMarketing()}
+
+      {/* Copy Generator Modal */}
        {copyModalOpen && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCopyModalOpen(false)}></div>
@@ -466,57 +630,6 @@ const StoreManager: React.FC = () => {
            </div>
          </div>
        )}
-    </div>
-  );
-
-  return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Gestión de Tienda</h1>
-          <p className="text-slate-500">Administra tu vitrina y catálogo de productos.</p>
-        </div>
-        
-        <div className="flex gap-2 w-full md:w-auto">
-          <a href="/store/preview" target="_blank" className="flex items-center justify-center px-4 py-2.5 border border-slate-300 text-slate-700 bg-white rounded-lg hover:bg-slate-50 transition-colors shadow-sm font-medium flex-1 md:flex-none">
-            <ExternalLink size={18} className="mr-2" /> Ver Tienda
-          </a>
-          <button 
-            onClick={handleSave}
-            className="flex items-center justify-center px-6 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors shadow-sm font-medium flex-1 md:flex-none"
-          >
-            {saving ? 'Guardando...' : <><Save size={18} className="mr-2" /> Guardar Todo</>}
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-slate-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('CONFIG')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'CONFIG'
-                ? 'border-sky-500 text-sky-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            Configuración General
-          </button>
-          <button
-            onClick={() => setActiveTab('CATALOG')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
-              activeTab === 'CATALOG'
-                ? 'border-sky-500 text-sky-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <Package size={16} className="mr-2" /> Mi Catálogo
-          </button>
-        </nav>
-      </div>
-
-      {activeTab === 'CONFIG' ? renderConfig() : renderCatalog()}
     </div>
   );
 };

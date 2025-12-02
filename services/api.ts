@@ -1,5 +1,5 @@
 
-import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails, Notification, NotificationType, AIPrediction, AIPriceSuggestion, FraudAnalysis } from '../types';
+import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails, Notification, NotificationType, AIPrediction, AIPriceSuggestion, FraudAnalysis, Challenge } from '../types';
 
 // Mock Data - Mercado Cubano Realista (Combos, Aseo, Electrónica)
 const MOCK_PRODUCTS: Product[] = [
@@ -284,6 +284,43 @@ const MOCK_NOTIFICATIONS: Notification[] = [
   }
 ];
 
+// Mock Challenges (Gamification)
+const MOCK_CHALLENGES: Challenge[] = [
+  {
+    id: 'c1',
+    title: 'Rey de las Ventas',
+    description: 'Vende 5 Combos de Aseo esta semana.',
+    target: 5,
+    current: 3,
+    reward: 'Comisión 0% en tu próximo retiro',
+    deadline: '2 días',
+    type: 'SALES',
+    icon: 'FIRE'
+  },
+  {
+    id: 'c2',
+    title: 'Viral en WhatsApp',
+    description: 'Comparte tu tienda 10 veces en grupos.',
+    target: 10,
+    current: 8,
+    reward: 'Insignia "Tienda Popular"',
+    deadline: '5 horas',
+    type: 'SHARES',
+    icon: 'ROCKET'
+  },
+  {
+    id: 'c3',
+    title: 'Vendedor Confiable',
+    description: 'Consigue 3 reseñas de 5 estrellas.',
+    target: 3,
+    current: 1,
+    reward: 'Acceso a Proveedores Premium',
+    deadline: '30 días',
+    type: 'REVIEWS',
+    icon: 'STAR'
+  }
+];
+
 // Simulate Network Latency
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -378,6 +415,17 @@ export const analyzeFraudRisk = async (orderTotal: number, customerPhone: string
     riskLevel: score > 70 ? 'HIGH' : score > 30 ? 'MEDIUM' : 'LOW',
     flags
   };
+};
+
+// Gamification Services
+export const getActiveChallenges = async (): Promise<Challenge[]> => {
+  await delay(400);
+  return MOCK_CHALLENGES;
+};
+
+export const generateSocialAsset = async (productId: string, type: 'STORY' | 'POST'): Promise<string> => {
+  await delay(1500); // Simulate processing time
+  return "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=600&auto=format&fit=crop"; // Placeholder
 };
 
 // Services

@@ -1,15 +1,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { getResellerKPIs, getOrders, getPlanLimits, getRecentNotifications, getInventoryPredictions } from '../services/api';
-import { KPI, Order, OrderStatus, PlanTier, Notification, NotificationType, AIPrediction } from '../types';
-import { TrendingUp, TrendingDown, Package, Zap, ArrowRight, DollarSign, Bell, AlertTriangle, Tag, ShieldAlert, Sparkles, BrainCircuit } from 'lucide-react';
+import { getResellerKPIs, getOrders, getPlanLimits, getRecentNotifications, getInventoryPredictions, getActiveChallenges } from '../services/api';
+import { KPI, Order, OrderStatus, PlanTier, Notification, NotificationType, AIPrediction, Challenge } from '../types';
+import { TrendingUp, TrendingDown, Package, Zap, ArrowRight, DollarSign, Bell, AlertTriangle, Tag, ShieldAlert, Sparkles, BrainCircuit, Target, Trophy, Flame } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [predictions, setPredictions] = useState<AIPrediction[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Simulated User Plan State
@@ -29,16 +30,18 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [kpiData, orderData, notifData, predData] = await Promise.all([
+      const [kpiData, orderData, notifData, predData, challData] = await Promise.all([
         getResellerKPIs(),
         getOrders(),
         getRecentNotifications(),
-        getInventoryPredictions()
+        getInventoryPredictions(),
+        getActiveChallenges()
       ]);
       setKpis(kpiData);
       setRecentOrders(orderData.slice(0, 5));
       setNotifications(notifData);
       setPredictions(predData);
+      setChallenges(challData);
       setLoading(false);
     };
     fetchData();
@@ -52,6 +55,14 @@ const Dashboard: React.FC = () => {
       case NotificationType.PRICE_CHANGE: return <Tag className="text-blue-500" size={18} />;
       case NotificationType.COMPLIANCE_WARNING: return <ShieldAlert className="text-orange-500" size={18} />;
       default: return <Bell className="text-slate-500" size={18} />;
+    }
+  };
+
+  const getChallengeIcon = (icon: string) => {
+    switch(icon) {
+      case 'FIRE': return <Flame size={16} className="text-orange-500" />;
+      case 'TROPHY': return <Trophy size={16} className="text-yellow-500" />;
+      default: return <Target size={16} className="text-sky-500" />;
     }
   };
 
@@ -137,6 +148,54 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Gamification Widget - NEW */}
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+             <div className="flex justify-between items-center mb-4">
+               <div>
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                    <Trophy className="text-yellow-500" size={20}/> 
+                    Misiones del Mes
+                  </h3>
+                  <p className="text-xs text-slate-400">Completa retos para desbloquear beneficios.</p>
+               </div>
+               <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">Nivel 1: Novato</span>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {challenges.map(challenge => (
+                  <div key={challenge.id} className="border border-slate-100 rounded-lg p-3 bg-slate-50 hover:bg-white transition-colors">
+                     <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                           <div className="p-1.5 bg-white rounded-md shadow-sm border border-slate-100">
+                             {getChallengeIcon(challenge.icon)}
+                           </div>
+                           <h4 className="font-bold text-slate-700 text-sm">{challenge.title}</h4>
+                        </div>
+                        <span className="text-[10px] text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-100">{challenge.deadline}</span>
+                     </div>
+                     <p className="text-xs text-slate-500 mb-3 line-clamp-2 min-h-[2.5em]">{challenge.description}</p>
+                     
+                     <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold">
+                           <span className="text-slate-400">{challenge.current} / {challenge.target}</span>
+                           <span className="text-indigo-600">{Math.round((challenge.current / challenge.target) * 100)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                           <div 
+                              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                              style={{ width: `${(challenge.current / challenge.target) * 100}%` }}
+                           ></div>
+                        </div>
+                     </div>
+                     <div className="mt-2 text-[10px] text-green-600 font-medium flex items-center">
+                        <GiftIcon size={10} className="mr-1" />
+                        Premio: {challenge.reward}
+                     </div>
+                  </div>
+                ))}
+             </div>
           </div>
 
           {/* Main Chart */}
@@ -243,5 +302,9 @@ const Dashboard: React.FC = () => {
     </div>
   );
 };
+
+const GiftIcon = ({ size, className }: { size: number, className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>
+);
 
 export default Dashboard;
