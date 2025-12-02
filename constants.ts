@@ -1,5 +1,5 @@
 
-import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity } from 'lucide-react';
+import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity, Zap } from 'lucide-react';
 
 export const APP_NAME = "Kiosko.cu";
 
@@ -8,12 +8,19 @@ export const CURRENCY_RATES = {
   MLC_TO_CUP: 270
 };
 
+export const MUNICIPIOS_HABANA = [
+  "Playa", "Plaza de la Revolución", "Centro Habana", "La Habana Vieja", "Regla", "La Habana del Este", 
+  "Guanabacoa", "San Miguel del Padrón", "Diez de Octubre", "Cerro", "Marianao", "La Lisa", 
+  "Boyeros", "Arroyo Naranjo", "Cotorro"
+];
+
 export const NAVIGATION_ITEMS = {
   RESELLER: [
     { name: 'Dashboard', icon: ChartColumn, path: '/' },
     { name: 'Mercado (Dropshipping)', icon: ShoppingBag, path: '/marketplace' },
     { name: 'Mi Tienda', icon: Settings, path: '/my-store' },
     { name: 'Pedidos', icon: Package, path: '/orders' },
+    { name: 'Planes y Facturación', icon: Zap, path: '/subscription' },
   ],
   SUPPLIER: [
     { name: 'Dashboard', icon: ChartColumn, path: '/' },

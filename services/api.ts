@@ -1,5 +1,5 @@
 
-import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus } from '../types';
+import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails } from '../types';
 
 // Mock Data - Mercado Cubano Realista (Combos, Aseo, Electrónica)
 const MOCK_PRODUCTS: Product[] = [
@@ -15,7 +15,14 @@ const MOCK_PRODUCTS: Product[] = [
     supplierName: 'Abastos Habana',
     category: 'Combos',
     imageUrl: 'https://images.unsplash.com/photo-1583947581924-860b81593810?auto=format&fit=crop&q=80&w=300',
-    isHot: true
+    isHot: true,
+    qualityScore: 98,
+    supplierReputation: {
+      fulfillmentRate: 99,
+      dispatchTimeHours: 24,
+      verified: true,
+      trustScore: 95
+    }
   },
   {
     id: 'p2',
@@ -29,7 +36,14 @@ const MOCK_PRODUCTS: Product[] = [
     supplierName: 'Importadora Vedado',
     category: 'Calzado',
     imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=300',
-    isHot: true
+    isHot: true,
+    qualityScore: 95,
+    supplierReputation: {
+      fulfillmentRate: 92,
+      dispatchTimeHours: 48,
+      verified: true,
+      trustScore: 88
+    }
   },
   {
     id: 'p3',
@@ -42,7 +56,14 @@ const MOCK_PRODUCTS: Product[] = [
     supplierId: 's1',
     supplierName: 'Electro Import',
     category: 'Electrodomésticos',
-    imageUrl: 'https://images.unsplash.com/photo-1585642686001-2a9443597c55?auto=format&fit=crop&q=80&w=300'
+    imageUrl: 'https://images.unsplash.com/photo-1585642686001-2a9443597c55?auto=format&fit=crop&q=80&w=300',
+    qualityScore: 90,
+    supplierReputation: {
+        fulfillmentRate: 85,
+        dispatchTimeHours: 72,
+        verified: true,
+        trustScore: 82
+    }
   },
   {
     id: 'p4',
@@ -56,7 +77,14 @@ const MOCK_PRODUCTS: Product[] = [
     supplierName: 'Distribuidora Local',
     category: 'Alimentos',
     imageUrl: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=300',
-    minQuantity: 1
+    minQuantity: 1,
+    qualityScore: 85,
+    supplierReputation: {
+        fulfillmentRate: 80,
+        dispatchTimeHours: 24,
+        verified: false,
+        trustScore: 65
+    }
   },
   {
     id: 'p5',
@@ -69,7 +97,14 @@ const MOCK_PRODUCTS: Product[] = [
     supplierId: 's1',
     supplierName: 'TecnoStore Cuba',
     category: 'Electrónica',
-    imageUrl: 'https://images.unsplash.com/photo-1609592425026-c27702581639?auto=format&fit=crop&q=80&w=300'
+    imageUrl: 'https://images.unsplash.com/photo-1609592425026-c27702581639?auto=format&fit=crop&q=80&w=300',
+    qualityScore: 92,
+    supplierReputation: {
+        fulfillmentRate: 94,
+        dispatchTimeHours: 12,
+        verified: true,
+        trustScore: 91
+    }
   },
   {
     id: 'p6',
@@ -82,7 +117,34 @@ const MOCK_PRODUCTS: Product[] = [
     supplierId: 's2',
     supplierName: 'Abastos Habana',
     category: 'Alimentos',
-    imageUrl: 'https://images.unsplash.com/photo-1594511877685-64de855d0452?auto=format&fit=crop&q=80&w=300'
+    imageUrl: 'https://images.unsplash.com/photo-1594511877685-64de855d0452?auto=format&fit=crop&q=80&w=300',
+    qualityScore: 88,
+    supplierReputation: {
+        fulfillmentRate: 99,
+        dispatchTimeHours: 24,
+        verified: true,
+        trustScore: 95
+    }
+  },
+  {
+    id: 'p7',
+    name: 'Cerveza Cristal (Caja 24u)',
+    description: 'Producto nacional. Entrega inmediata en Playa y Marianao.',
+    priceRetail: 4800,
+    priceWholesale: 4200,
+    currency: 'CUP',
+    stock: 100,
+    supplierId: 's3',
+    supplierName: 'Distribuidora Local',
+    category: 'Alimentos',
+    imageUrl: 'https://images.unsplash.com/photo-1606859188014-d67b209e5306?auto=format&fit=crop&q=80&w=300',
+    qualityScore: 40, // Low quality score example (spammy post)
+    supplierReputation: {
+        fulfillmentRate: 60,
+        dispatchTimeHours: 96,
+        verified: false,
+        trustScore: 45
+    }
   }
 ];
 
@@ -188,7 +250,8 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getProducts = async (): Promise<Product[]> => {
   await delay(600);
-  return MOCK_PRODUCTS;
+  // Filter out very low quality products (Anti-Spam basics)
+  return MOCK_PRODUCTS.filter(p => (p.qualityScore || 0) > 50);
 };
 
 export const getOrders = async (): Promise<Order[]> => {
@@ -209,33 +272,114 @@ export const getPlanLimits = (tier: PlanTier): PlanLimits => {
     case PlanTier.FREE:
       return { 
         maxStores: 1, 
-        maxProducts: 15, 
+        maxProducts: 25, 
         maxOrdersPerMonth: 10, 
-        hasCustomDomain: false, 
-        hasAdvancedStats: false,
-        commissionRate: 0.05
+        commissionRate: 0.05,
+        features: {
+          customDomain: false,
+          removeBranding: false,
+          advancedAnalytics: false,
+          apiAccess: false,
+          automatedPricing: false,
+          prioritySupport: false,
+          localDropshipping: false
+        }
       };
     case PlanTier.PRO:
       return { 
         maxStores: 3, 
         maxProducts: 500, 
         maxOrdersPerMonth: 200, 
-        hasCustomDomain: true, 
-        hasAdvancedStats: true,
-        commissionRate: 0.02
+        commissionRate: 0.02,
+        features: {
+          customDomain: true,
+          removeBranding: true,
+          advancedAnalytics: true,
+          apiAccess: false,
+          automatedPricing: true,
+          prioritySupport: true,
+          localDropshipping: false
+        }
       };
     case PlanTier.ULTRA:
       return { 
-        maxStores: 10, 
+        maxStores: 9999, 
         maxProducts: 9999, 
         maxOrdersPerMonth: 9999, 
-        hasCustomDomain: true, 
-        hasAdvancedStats: true,
-        commissionRate: 0
+        commissionRate: 0,
+        features: {
+          customDomain: true,
+          removeBranding: true,
+          advancedAnalytics: true,
+          apiAccess: true,
+          automatedPricing: true,
+          prioritySupport: true,
+          localDropshipping: true
+        }
       };
     default:
       return getPlanLimits(PlanTier.FREE);
   }
+};
+
+export const getSubscriptionPlans = async (): Promise<PlanDetails[]> => {
+  await delay(300);
+  return [
+    {
+      id: PlanTier.FREE,
+      name: 'Plan Entrada',
+      priceUSD: 0,
+      priceCUP: 0,
+      description: 'Ideal para validar tu idea de negocio sin arriesgar capital.',
+      limits: getPlanLimits(PlanTier.FREE)
+    },
+    {
+      id: PlanTier.PRO,
+      name: 'Plan Emprendedor',
+      priceUSD: 9,
+      priceCUP: 2800,
+      description: 'Para quienes ya tienen ventas recurrentes y quieren marca propia.',
+      limits: getPlanLimits(PlanTier.PRO)
+    },
+    {
+      id: PlanTier.ULTRA,
+      name: 'Plan Distribuidor',
+      priceUSD: 29,
+      priceCUP: 9000,
+      description: 'Potencia de agencia. Acceso a API y herramientas de logística.',
+      limits: getPlanLimits(PlanTier.ULTRA)
+    }
+  ];
+};
+
+// --- New Services for Store Management ---
+
+export const getMyStoreProducts = async (): Promise<StoreProduct[]> => {
+  await delay(500);
+  // Simulating products the reseller has added to their store
+  // We take the first 4 items from MOCK_PRODUCTS
+  return MOCK_PRODUCTS.slice(0, 4).map((p, idx) => ({
+    ...p,
+    customRetailPrice: p.priceRetail, // Default to suggested retail
+    isActive: idx !== 2, // Simulate one inactive product
+    addedAt: '2023-10-20',
+    profitMargin: p.priceRetail - p.priceWholesale
+  }));
+};
+
+export const updateStoreProductPrice = async (productId: string, newPrice: number): Promise<boolean> => {
+  await delay(300);
+  return true;
+};
+
+export const toggleProductStatus = async (productId: string, isActive: boolean): Promise<boolean> => {
+  await delay(300);
+  return true;
+};
+
+export const submitPublicOrder = async (order: any): Promise<{success: boolean, orderId: string}> => {
+  await delay(1000);
+  return { success: true, orderId: `ORD-${Math.floor(Math.random() * 10000)}` };
 };
 
 // Admin Services

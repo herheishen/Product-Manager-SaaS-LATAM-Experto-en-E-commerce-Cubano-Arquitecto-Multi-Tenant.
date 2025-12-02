@@ -39,9 +39,32 @@ export interface PlanLimits {
   maxStores: number;
   maxProducts: number;
   maxOrdersPerMonth: number;
-  hasCustomDomain: boolean;
-  hasAdvancedStats: boolean;
   commissionRate: number; // Tasa de comisión de la plataforma
+  features: {
+    customDomain: boolean;
+    removeBranding: boolean;
+    advancedAnalytics: boolean;
+    apiAccess: boolean;
+    automatedPricing: boolean;
+    prioritySupport: boolean;
+    localDropshipping: boolean;
+  };
+}
+
+export interface PlanDetails {
+  id: PlanTier;
+  name: string;
+  priceUSD: number;
+  priceCUP: number; // Aproximado fijo
+  description: string;
+  limits: PlanLimits;
+}
+
+export interface SupplierReputation {
+  fulfillmentRate: number; // 0-100%
+  dispatchTimeHours: number;
+  verified: boolean;
+  trustScore: number; // 0-100 calculated
 }
 
 export interface Product {
@@ -58,6 +81,15 @@ export interface Product {
   imageUrl: string;
   isHot?: boolean; // Producto en tendencia
   minQuantity?: number; // Venta mínima (común en mayoristas)
+  qualityScore?: number; // 0-100 internal score for anti-spam
+  supplierReputation?: SupplierReputation;
+}
+
+export interface StoreProduct extends Product {
+  customRetailPrice: number; // Precio definido por el gestor
+  isActive: boolean;
+  addedAt: string;
+  profitMargin: number; // Calculated (Retail - Wholesale)
 }
 
 export interface StoreConfig {
@@ -73,6 +105,25 @@ export interface StoreConfig {
     zelle: boolean;
     usdt: boolean;
   };
+}
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  currency: 'USD' | 'CUP' | 'MLC';
+  supplierId: string;
+}
+
+export interface CheckoutDetails {
+  customerName: string;
+  phone: string;
+  address: string;
+  municipality: string;
+  paymentMethod: string;
+  notes?: string;
 }
 
 export interface Order {

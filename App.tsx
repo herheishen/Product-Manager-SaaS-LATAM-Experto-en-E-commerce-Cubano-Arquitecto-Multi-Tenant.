@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import Marketplace from './pages/Marketplace';
 import StoreManager from './pages/StoreManager';
 import AdminDashboard from './pages/AdminDashboard';
+import PublicStore from './pages/PublicStore';
+import Subscription from './pages/Subscription';
 import { UserRole } from './types';
 
 // Simple Router for the single XML constraint
@@ -12,10 +14,30 @@ const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState('/');
   const [role, setRole] = useState<UserRole>(UserRole.RESELLER);
 
+  // Check URL for "public store" simulation mode
+  const [isPublicStoreMode, setIsPublicStoreMode] = useState(false);
+
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/store/')) {
+      setIsPublicStoreMode(true);
+    }
+  }, []);
+
   // When role changes, reset path to root to avoid 404s
   useEffect(() => {
     setCurrentPath('/');
   }, [role]);
+
+  // Handle fake navigation to public store
+  useEffect(() => {
+    if (currentPath === '/store/preview') {
+      setIsPublicStoreMode(true);
+    }
+  }, [currentPath]);
+
+  if (isPublicStoreMode) {
+    return <PublicStore />;
+  }
 
   const renderPage = () => {
     // Admin Routes
@@ -46,6 +68,8 @@ const App: React.FC = () => {
           return <StoreManager />;
         case '/orders':
           return <div className="p-10 text-center text-slate-500">Gestión de Pedidos Completa (Mock)</div>;
+        case '/subscription':
+          return <Subscription />;
         default:
           return <Dashboard />;
       }
