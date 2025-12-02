@@ -1,5 +1,5 @@
 
-import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails } from '../types';
+import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus, StoreProduct, PlanDetails, Notification, NotificationType } from '../types';
 
 // Mock Data - Mercado Cubano Realista (Combos, Aseo, Electrónica)
 const MOCK_PRODUCTS: Product[] = [
@@ -195,6 +195,8 @@ const MOCK_SUPPLIER_REQUESTS: SupplierRequest[] = [
   {
     id: 'req-01',
     businessName: 'Bodega Vedado Import',
+    legalType: 'MIPYME',
+    address: 'Calle 23 e/ L y M, Vedado, Plaza',
     ownerName: 'Roberto Pérez',
     phone: '+53 55551111',
     documentId: '89101022334',
@@ -205,8 +207,10 @@ const MOCK_SUPPLIER_REQUESTS: SupplierRequest[] = [
   {
     id: 'req-02',
     businessName: 'MIPYME "El Habanero"',
+    legalType: 'TCP',
+    address: 'Ave 51, Marianao',
     ownerName: 'Maria Rodríguez',
-    phone: '+53 52223344',
+    phone: '+53 12345678', // Invalid phone for test
     documentId: '75050599887',
     status: SupplierStatus.PENDING,
     registeredDate: '2023-10-25',
@@ -215,6 +219,8 @@ const MOCK_SUPPLIER_REQUESTS: SupplierRequest[] = [
   {
     id: 'req-03',
     businessName: 'TechnoCell 23',
+    legalType: 'MIPYME',
+    address: 'Calle G, Vedado',
     ownerName: 'Alejandro G.',
     phone: '+53 59990000',
     documentId: '95121266778',
@@ -245,12 +251,75 @@ const MOCK_PAYOUTS: Payout[] = [
   }
 ];
 
+// Mock Notifications
+const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: 'n1',
+    type: NotificationType.STOCK_ALERT,
+    title: '⚠️ Stock Bajo: Powerbank Xiaomi',
+    message: 'El proveedor "TecnoStore Cuba" solo tiene 3 unidades. Si vendes ahora podría fallar.',
+    date: 'Hace 10 min',
+    read: false,
+    priority: 'HIGH',
+    relatedProductId: 'p5'
+  },
+  {
+    id: 'n2',
+    type: NotificationType.PRICE_CHANGE,
+    title: 'Cambio de Precio: Aceite Girasol',
+    message: 'Distribuidora Local bajó el costo a 9200 CUP. ¡Puedes mejorar tu margen!',
+    date: 'Hace 2 horas',
+    read: false,
+    priority: 'MEDIUM',
+    relatedProductId: 'p4'
+  },
+  {
+    id: 'n3',
+    type: NotificationType.COMPLIANCE_WARNING,
+    title: 'Producto Eliminado',
+    message: 'Tu producto "Antibiótico Genérico" ha sido eliminado por violar las normas de venta.',
+    date: 'Ayer',
+    read: true,
+    priority: 'HIGH'
+  }
+];
+
 // Simulate Network Latency
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// --- CRITICAL VALIDATION LOGIC ---
+
+export const validateCubanCI = (ci: string): boolean => {
+  // Regex: 11 digits, strict date validation (Year 00-99, Month 01-12, Day 01-31)
+  // Simplified for MVP to digit count
+  return /^\d{11}$/.test(ci);
+};
+
+export const validateCubanPhone = (phone: string): boolean => {
+  // ETECSA Format: +53 followed by 5 or 6, then 7 digits. Or just 535...
+  // Normalize: remove spaces, pluses
+  const cleaned = phone.replace(/[^0-9]/g, '');
+  // Must match 53 + (5 or 6) + 7 digits = 10 digits total
+  return /^53[56]\d{7}$/.test(cleaned);
+};
+
+export const checkProductCompliance = (name: string, description: string): { allowed: boolean, reason?: string } => {
+  const forbiddenKeywords = ['antibiotico', 'azitromicina', 'dolar', 'euro', 'mlc', 'droga', 'arma'];
+  const text = (name + ' ' + description).toLowerCase();
+  
+  for (const word of forbiddenKeywords) {
+    // Check whole word match or significant part
+    if (text.includes(word)) {
+      return { allowed: false, reason: `Contiene término prohibido: "${word}"` };
+    }
+  }
+  return { allowed: true };
+};
+
+// Services
+
 export const getProducts = async (): Promise<Product[]> => {
   await delay(600);
-  // Filter out very low quality products (Anti-Spam basics)
   return MOCK_PRODUCTS.filter(p => (p.qualityScore || 0) > 50);
 };
 
@@ -352,16 +421,12 @@ export const getSubscriptionPlans = async (): Promise<PlanDetails[]> => {
   ];
 };
 
-// --- New Services for Store Management ---
-
 export const getMyStoreProducts = async (): Promise<StoreProduct[]> => {
   await delay(500);
-  // Simulating products the reseller has added to their store
-  // We take the first 4 items from MOCK_PRODUCTS
   return MOCK_PRODUCTS.slice(0, 4).map((p, idx) => ({
     ...p,
-    customRetailPrice: p.priceRetail, // Default to suggested retail
-    isActive: idx !== 2, // Simulate one inactive product
+    customRetailPrice: p.priceRetail,
+    isActive: idx !== 2,
     addedAt: '2023-10-20',
     profitMargin: p.priceRetail - p.priceWholesale
   }));
@@ -382,6 +447,11 @@ export const submitPublicOrder = async (order: any): Promise<{success: boolean, 
   return { success: true, orderId: `ORD-${Math.floor(Math.random() * 10000)}` };
 };
 
+export const getRecentNotifications = async (): Promise<Notification[]> => {
+  await delay(400);
+  return MOCK_NOTIFICATIONS;
+};
+
 // Admin Services
 export const getAdminStats = async (): Promise<KPI[]> => {
   await delay(400);
@@ -396,6 +466,11 @@ export const getAdminStats = async (): Promise<KPI[]> => {
 export const getSupplierRequests = async (): Promise<SupplierRequest[]> => {
   await delay(500);
   return MOCK_SUPPLIER_REQUESTS;
+};
+
+export const verifySupplier = async (supplierId: string, status: SupplierStatus): Promise<boolean> => {
+  await delay(1000);
+  return true;
 };
 
 export const getPendingPayouts = async (): Promise<Payout[]> => {

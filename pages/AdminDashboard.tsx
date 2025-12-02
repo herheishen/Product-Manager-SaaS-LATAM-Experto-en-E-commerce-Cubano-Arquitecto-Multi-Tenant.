@@ -2,10 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Users, CheckCircle, XCircle, AlertTriangle, FileText, 
-  DollarSign, Truck, Search, Activity, Eye, CreditCard
+  DollarSign, Truck, Search, Activity, Eye, CreditCard, ShieldCheck, X
 } from 'lucide-react';
 import { 
-  getAdminStats, getSupplierRequests, getPendingPayouts 
+  getAdminStats, getSupplierRequests, getPendingPayouts, 
+  validateCubanCI, validateCubanPhone, verifySupplier 
 } from '../services/api';
 import { KPI, SupplierRequest, SupplierStatus, Payout, PayoutStatus } from '../types';
 
@@ -15,6 +16,10 @@ const AdminDashboard: React.FC = () => {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SUPPLIERS' | 'FINANCE' | 'LOGISTICS'>('OVERVIEW');
   const [loading, setLoading] = useState(true);
+
+  // Verification Modal State
+  const [selectedRequest, setSelectedRequest] = useState<SupplierRequest | null>(null);
+  const [auditResult, setAuditResult] = useState<{validCI: boolean, validPhone: boolean} | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +35,24 @@ const AdminDashboard: React.FC = () => {
     };
     fetchData();
   }, []);
+
+  const handleAudit = (request: SupplierRequest) => {
+    const validCI = validateCubanCI(request.documentId);
+    const validPhone = validateCubanPhone(request.phone);
+    setAuditResult({ validCI, validPhone });
+    setSelectedRequest(request);
+  };
+
+  const confirmVerification = async (approved: boolean) => {
+    if (!selectedRequest) return;
+    const status = approved ? SupplierStatus.VERIFIED : SupplierStatus.REJECTED;
+    await verifySupplier(selectedRequest.id, status);
+    
+    // Update local state
+    setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status } : r));
+    setSelectedRequest(null);
+    setAuditResult(null);
+  };
 
   if (loading) return <div className="flex justify-center items-center h-64 text-slate-500">Cargando Panel Maestro...</div>;
 
@@ -70,7 +93,10 @@ const AdminDashboard: React.FC = () => {
                    <p className="font-bold text-slate-900 text-sm">{req.businessName}</p>
                    <p className="text-xs text-slate-500">{req.ownerName} • CI: {req.documentId}</p>
                 </div>
-                <button className="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700">
+                <button 
+                  onClick={() => handleAudit(req)}
+                  className="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700"
+                >
                   Revisar
                 </button>
               </div>
@@ -122,8 +148,8 @@ const AdminDashboard: React.FC = () => {
         <thead className="bg-slate-50 text-slate-500 font-medium">
           <tr>
             <th className="px-6 py-3">Negocio / Dueño</th>
+            <th className="px-6 py-3">Legalidad</th>
             <th className="px-6 py-3">Documento ID</th>
-            <th className="px-6 py-3">Inventario Inicial</th>
             <th className="px-6 py-3">Estado</th>
             <th className="px-6 py-3 text-right">Acciones</th>
           </tr>
@@ -135,8 +161,11 @@ const AdminDashboard: React.FC = () => {
                 <div className="font-bold text-slate-900">{req.businessName}</div>
                 <div className="text-xs text-slate-500">{req.ownerName}</div>
               </td>
+              <td className="px-6 py-4">
+                 <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded border border-slate-200">{req.legalType}</span>
+                 <div className="text-[10px] text-slate-400 mt-1 truncate max-w-[150px]">{req.address}</div>
+              </td>
               <td className="px-6 py-4 font-mono text-slate-600">{req.documentId}</td>
-              <td className="px-6 py-4">{req.inventoryCount} items</td>
               <td className="px-6 py-4">
                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
                   req.status === SupplierStatus.VERIFIED ? 'bg-green-100 text-green-700' : 
@@ -146,12 +175,15 @@ const AdminDashboard: React.FC = () => {
                 </span>
               </td>
               <td className="px-6 py-4 text-right space-x-2">
-                <button className="text-slate-400 hover:text-indigo-600"><Eye size={18} /></button>
-                {req.status === SupplierStatus.PENDING && (
-                  <>
-                    <button className="text-green-500 hover:text-green-700"><CheckCircle size={18} /></button>
-                    <button className="text-red-500 hover:text-red-700"><XCircle size={18} /></button>
-                  </>
+                {req.status === SupplierStatus.PENDING ? (
+                   <button 
+                    onClick={() => handleAudit(req)}
+                    className="text-indigo-600 hover:text-indigo-800 font-bold text-xs"
+                   >
+                     Auditar
+                   </button>
+                ) : (
+                  <button className="text-slate-400 hover:text-indigo-600"><Eye size={18} /></button>
                 )}
               </td>
             </tr>
@@ -162,7 +194,7 @@ const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -217,6 +249,88 @@ const AdminDashboard: React.FC = () => {
            <Truck className="mx-auto h-12 w-12 text-slate-300 mb-4" />
            <h3 className="text-lg font-bold text-slate-700">Torre de Control Logística</h3>
            <p className="max-w-md mx-auto mt-2">Monitoreo en tiempo real de mensajeros privados y entregas. Mapa de calor de zonas de entrega.</p>
+        </div>
+      )}
+
+      {/* AUDIT MODAL */}
+      {selectedRequest && auditResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedRequest(null)}></div>
+           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                 <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                    <ShieldCheck size={20} className="text-indigo-600" /> Auditoría de Proveedor
+                 </h3>
+                 <button onClick={() => setSelectedRequest(null)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                 {/* Supplier Identity */}
+                 <div className="flex gap-4">
+                    <div className="w-16 h-16 bg-slate-200 rounded-lg flex-shrink-0"></div>
+                    <div>
+                       <h4 className="font-bold text-slate-900 text-lg">{selectedRequest.businessName}</h4>
+                       <p className="text-sm text-slate-500">{selectedRequest.legalType} • {selectedRequest.address}</p>
+                       <p className="text-xs text-slate-400 mt-1">Registrado el {selectedRequest.registeredDate}</p>
+                    </div>
+                 </div>
+
+                 {/* Automated Checks */}
+                 <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 space-y-3">
+                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Validaciones Automáticas</p>
+                    
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                          <FileText size={16} className="text-slate-400" />
+                          <span className="text-sm font-medium text-slate-700">Formato Carnet (CI)</span>
+                       </div>
+                       {auditResult.validCI ? (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold flex items-center"><CheckCircle size={12} className="mr-1"/> Válido</span>
+                       ) : (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold flex items-center"><AlertTriangle size={12} className="mr-1"/> Inválido</span>
+                       )}
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                          <Users size={16} className="text-slate-400" />
+                          <span className="text-sm font-medium text-slate-700">Teléfono Cubano (+53)</span>
+                       </div>
+                       {auditResult.validPhone ? (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold flex items-center"><CheckCircle size={12} className="mr-1"/> Válido</span>
+                       ) : (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold flex items-center"><AlertTriangle size={12} className="mr-1"/> Inválido</span>
+                       )}
+                    </div>
+                 </div>
+
+                 {/* Disclaimer */}
+                 {!auditResult.validCI || !auditResult.validPhone ? (
+                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-800">
+                       ⚠️ Advertencia: Los datos proporcionados no cumplen con el formato legal cubano. Se recomienda rechazar la solicitud.
+                    </div>
+                 ) : (
+                    <div className="p-3 bg-green-50 border border-green-100 rounded-lg text-xs text-green-800">
+                       ✅ Todo parece correcto. Puedes proceder con la aprobación manual.
+                    </div>
+                 )}
+              </div>
+
+              <div className="p-5 border-t border-slate-100 bg-slate-50 flex gap-3">
+                 <button 
+                    onClick={() => confirmVerification(false)}
+                    className="flex-1 py-2.5 border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-white transition-colors"
+                 >
+                    Rechazar
+                 </button>
+                 <button 
+                    onClick={() => confirmVerification(true)}
+                    className="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                 >
+                    Aprobar Proveedor
+                 </button>
+              </div>
+           </div>
         </div>
       )}
     </div>

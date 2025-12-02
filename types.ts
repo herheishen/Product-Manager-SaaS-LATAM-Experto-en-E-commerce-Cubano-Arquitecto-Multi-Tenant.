@@ -35,6 +35,24 @@ export enum PayoutStatus {
   PAID = 'PAID'
 }
 
+export enum NotificationType {
+  STOCK_ALERT = 'STOCK_ALERT', // Critical: Stock bajo o agotado
+  PRICE_CHANGE = 'PRICE_CHANGE', // Important: Margen afectado
+  SYSTEM = 'SYSTEM', // Mantenimiento, etc.
+  COMPLIANCE_WARNING = 'COMPLIANCE_WARNING' // Producto eliminado por ilegal
+}
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  relatedProductId?: string;
+}
+
 export interface PlanLimits {
   maxStores: number;
   maxProducts: number;
@@ -150,15 +168,25 @@ export interface KPI {
 }
 
 // Interfaces Admin
+export interface VerificationResult {
+  validCI: boolean;
+  validPhone: boolean;
+  backgroundCheck: 'CLEAN' | 'FLAGGED';
+  notes?: string;
+}
+
 export interface SupplierRequest {
   id: string;
   businessName: string;
+  legalType: 'TCP' | 'MIPYME' | 'NATURAL';
+  address: string;
   ownerName: string;
   phone: string;
   documentId: string; // CI
   status: SupplierStatus;
   registeredDate: string;
   inventoryCount: number;
+  verificationData?: VerificationResult;
 }
 
 export interface Payout {

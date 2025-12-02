@@ -1,13 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { getResellerKPIs, getOrders, getPlanLimits } from '../services/api';
-import { KPI, Order, OrderStatus, PlanTier } from '../types';
-import { TrendingUp, TrendingDown, Package, Zap, ArrowRight, DollarSign } from 'lucide-react';
+import { getResellerKPIs, getOrders, getPlanLimits, getRecentNotifications } from '../services/api';
+import { KPI, Order, OrderStatus, PlanTier, Notification, NotificationType } from '../types';
+import { TrendingUp, TrendingDown, Package, Zap, ArrowRight, DollarSign, Bell, AlertTriangle, Tag, ShieldAlert } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Simulated User Plan State
@@ -27,16 +28,29 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const kpiData = await getResellerKPIs();
-      const orderData = await getOrders();
+      const [kpiData, orderData, notifData] = await Promise.all([
+        getResellerKPIs(),
+        getOrders(),
+        getRecentNotifications()
+      ]);
       setKpis(kpiData);
       setRecentOrders(orderData.slice(0, 5));
+      setNotifications(notifData);
       setLoading(false);
     };
     fetchData();
   }, []);
 
   if (loading) return <div className="flex h-64 items-center justify-center text-slate-500 font-medium">Cargando tu Kiosko...</div>;
+
+  const getNotificationIcon = (type: NotificationType) => {
+    switch (type) {
+      case NotificationType.STOCK_ALERT: return <AlertTriangle className="text-red-500" size={18} />;
+      case NotificationType.PRICE_CHANGE: return <Tag className="text-blue-500" size={18} />;
+      case NotificationType.COMPLIANCE_WARNING: return <ShieldAlert className="text-orange-500" size={18} />;
+      default: return <Bell className="text-slate-500" size={18} />;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -95,104 +109,128 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {kpis.map((kpi, index) => (
-          <div key={index} className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between z-10 relative">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{kpi.label}</p>
-                <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{kpi.value}</h3>
-                {kpi.subtext && <p className="text-xs text-slate-400 mt-1 font-medium">{kpi.subtext}</p>}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Column: Stats & Charts */}
+        <div className="lg:col-span-3 space-y-6">
+           {/* KPI Cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {kpis.map((kpi, index) => (
+              <div key={index} className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between z-10 relative">
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{kpi.label}</p>
+                    <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{kpi.value}</h3>
+                    {kpi.subtext && <p className="text-xs text-slate-400 mt-1 font-medium">{kpi.subtext}</p>}
+                  </div>
+                  <div className={`p-3 rounded-full ${kpi.isPositive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                    {kpi.isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm relative z-10">
+                  <span className={`${kpi.isPositive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} font-bold px-2 py-0.5 rounded text-xs`}>
+                    {kpi.isPositive ? '+' : ''}{kpi.trend}%
+                  </span>
+                  <span className="text-slate-400 ml-2 text-xs">vs mes anterior</span>
+                </div>
               </div>
-              <div className={`p-3 rounded-full ${kpi.isPositive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                {kpi.isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm relative z-10">
-              <span className={`${kpi.isPositive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} font-bold px-2 py-0.5 rounded text-xs`}>
-                {kpi.isPositive ? '+' : ''}{kpi.trend}%
-              </span>
-              <span className="text-slate-400 ml-2 text-xs">vs mes anterior</span>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2 min-w-0">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-slate-800">Rendimiento Financiero</h3>
-              <p className="text-xs text-slate-400">Ventas vs Comisiones (USD eq)</p>
+          {/* Main Chart */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">Rendimiento Financiero</h3>
+                <p className="text-xs text-slate-400">Ventas vs Comisiones (USD eq)</p>
+              </div>
+              <select className="text-xs border border-slate-200 rounded-lg text-slate-600 px-2 py-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <option>Últimos 7 días</option>
+                <option>Este Mes</option>
+              </select>
             </div>
-            <select className="text-xs border border-slate-200 rounded-lg text-slate-600 px-2 py-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
-              <option>Últimos 7 días</option>
-              <option>Este Mes</option>
-            </select>
-          </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <BarChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
-                />
-                <Bar dataKey="sales" name="Venta Total" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
-                <Bar dataKey="commission" name="Tu Ganancia" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <BarChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
+                  />
+                  <Bar dataKey="sales" name="Venta Total" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
+                  <Bar dataKey="commission" name="Tu Ganancia" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={24} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
-        {/* Recent Orders List - Compact */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col min-w-0">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-slate-800">Pedidos Recientes</h3>
-            <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full font-bold">{recentOrders.length}</span>
+        {/* Right Column: Notifications & Orders */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Notification Center - NEW */}
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+             <div className="flex items-center gap-2 mb-4">
+                <Bell size={18} className="text-slate-800" />
+                <h3 className="font-bold text-slate-800 text-sm">Centro de Alertas</h3>
+                {notifications.some(n => !n.read) && <span className="w-2 h-2 rounded-full bg-red-500 ml-auto"></span>}
+             </div>
+             
+             <div className="space-y-3">
+               {notifications.length === 0 ? (
+                 <p className="text-xs text-slate-400 text-center py-4">Sin notificaciones.</p>
+               ) : (
+                 notifications.map(n => (
+                   <div key={n.id} className={`p-3 rounded-lg border text-xs ${n.priority === 'HIGH' ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
+                      <div className="flex items-start gap-2">
+                        <div className="mt-0.5">{getNotificationIcon(n.type)}</div>
+                        <div>
+                          <p className={`font-bold ${n.priority === 'HIGH' ? 'text-red-800' : 'text-slate-700'}`}>{n.title}</p>
+                          <p className="text-slate-500 mt-1 leading-relaxed">{n.message}</p>
+                          <p className="text-[10px] text-slate-400 mt-2 font-medium text-right">{n.date}</p>
+                        </div>
+                      </div>
+                   </div>
+                 ))
+               )}
+             </div>
+             <button className="w-full text-xs text-sky-600 font-bold mt-3 hover:underline">Ver Historial</button>
           </div>
-          
-          <div className="space-y-3 flex-1 overflow-auto pr-1 custom-scrollbar">
-            {recentOrders.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-sm">No hay pedidos aún.</div>
-            ) : (
-              recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-sky-100 hover:bg-sky-50 transition-all cursor-pointer group">
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <div className="p-2.5 bg-slate-50 rounded-lg group-hover:bg-white transition-colors border border-slate-100">
-                      <Package size={16} className="text-slate-400 group-hover:text-sky-500" />
+
+          {/* Recent Orders List - Compact */}
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col min-w-0">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-slate-800 text-sm">Pedidos Recientes</h3>
+              <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-1 rounded-full font-bold">{recentOrders.length}</span>
+            </div>
+            
+            <div className="space-y-3 flex-1 overflow-auto pr-1 custom-scrollbar max-h-[400px]">
+              {recentOrders.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 text-xs">No hay pedidos aún.</div>
+              ) : (
+                recentOrders.map((order) => (
+                  <div key={order.id} className="p-3 rounded-lg border border-slate-100 hover:border-sky-100 hover:bg-sky-50 transition-all cursor-pointer group">
+                    <div className="flex justify-between items-start mb-1">
+                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                          order.status === OrderStatus.CONFIRMED ? 'bg-green-100 text-green-700' :
+                          order.status === OrderStatus.PENDING ? 'bg-amber-100 text-amber-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {order.status === OrderStatus.CONFIRMED ? 'Conf' : order.status === OrderStatus.PENDING ? 'Pend' : 'Entr'}
+                       </span>
+                       <span className="text-xs font-bold text-slate-900">{order.total} {order.currency}</span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 truncate">{order.customerName}</p>
-                      <p className="text-[10px] text-slate-500 truncate text-ellipsis">{order.items[0]?.productName}</p>
-                    </div>
+                    <p className="text-xs font-bold text-slate-800 truncate">{order.customerName}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{order.items[0]?.productName}</p>
                   </div>
-                  <div className="text-right pl-2">
-                    <div className="flex items-center justify-end text-sm font-bold text-slate-900">
-                      <span>{order.currency === 'USD' ? '$' : ''}{order.total}</span>
-                      <span className="text-[10px] text-slate-400 ml-1 font-normal">{order.currency}</span>
-                    </div>
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase mt-1 ${
-                      order.status === OrderStatus.CONFIRMED ? 'bg-green-100 text-green-700' :
-                      order.status === OrderStatus.PENDING ? 'bg-amber-100 text-amber-700' :
-                      order.status === OrderStatus.DELIVERED ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {order.status === OrderStatus.CONFIRMED ? 'Confirmado' : order.status === OrderStatus.PENDING ? 'Pendiente' : 'Entregado'}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
+            
+            <button className="w-full py-2.5 mt-4 text-xs text-slate-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors flex items-center justify-center">
+              Ver Todos <ArrowRight size={14} className="ml-2" />
+            </button>
           </div>
-          
-          <button className="w-full py-3 mt-4 text-sm text-slate-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors flex items-center justify-center">
-            Ver Todos <ArrowRight size={16} className="ml-2" />
-          </button>
         </div>
       </div>
     </div>
