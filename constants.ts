@@ -1,4 +1,5 @@
-import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings } from 'lucide-react';
+
+import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity } from 'lucide-react';
 
 export const APP_NAME = "Kiosko.cu";
 
@@ -19,6 +20,12 @@ export const NAVIGATION_ITEMS = {
     { name: 'Inventario', icon: Package, path: '/inventory' },
     { name: 'Gestores Activos', icon: Users, path: '/resellers' },
     { name: 'Finanzas', icon: DollarSign, path: '/finance' },
+  ],
+  ADMIN: [
+    { name: 'Control Maestro', icon: Activity, path: '/' },
+    { name: 'Proveedores (KYC)', icon: ShieldCheck, path: '/admin/suppliers' },
+    { name: 'Logística Global', icon: Truck, path: '/admin/logistics' },
+    { name: 'Finanzas SaaS', icon: DollarSign, path: '/admin/finance' },
   ]
 };
 
@@ -26,6 +33,8 @@ export const COLORS = {
   primary: '#0f172a', // Slate 900
   secondary: '#0ea5e9', // Sky 500
   accent: '#22c55e', // Green 500 (Money/Success)
+  warning: '#f59e0b', // Amber 500
+  error: '#ef4444', // Red 500
   background: '#f8fafc',
   surface: '#ffffff'
 };

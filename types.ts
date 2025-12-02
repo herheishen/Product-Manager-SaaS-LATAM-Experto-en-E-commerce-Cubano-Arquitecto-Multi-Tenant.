@@ -2,21 +2,37 @@
 export enum UserRole {
   RESELLER = 'RESELLER', // "Gestor"
   SUPPLIER = 'SUPPLIER', // "Proveedor"
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN' // "Super Admin SaaS"
 }
 
 export enum OrderStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
+  PREPARING = 'PREPARING', // En preparación
+  READY_FOR_PICKUP = 'READY_FOR_PICKUP', // Listo para mensajero
   SHIPPED = 'SHIPPED',
   DELIVERED = 'DELIVERED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
+  DISPUTED = 'DISPUTED' // Problema reportado
 }
 
 export enum PlanTier {
   FREE = 'FREE',
   PRO = 'PRO',
   ULTRA = 'ULTRA'
+}
+
+export enum SupplierStatus {
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+  SUSPENDED = 'SUSPENDED'
+}
+
+export enum PayoutStatus {
+  UNPAID = 'UNPAID', // Plataforma debe pagar al proveedor
+  PROCESSING = 'PROCESSING',
+  PAID = 'PAID'
 }
 
 export interface PlanLimits {
@@ -69,6 +85,9 @@ export interface Order {
   date: string;
   items: { productId: string; quantity: number; productName: string; price: number }[];
   commission: number; 
+  deliveryMethod?: 'PICKUP' | 'DELIVERY';
+  deliveryAddress?: string;
+  supplierId?: string; // Para tracking admin
 }
 
 export interface KPI {
@@ -77,4 +96,26 @@ export interface KPI {
   trend: number; 
   isPositive: boolean;
   subtext?: string;
+}
+
+// Interfaces Admin
+export interface SupplierRequest {
+  id: string;
+  businessName: string;
+  ownerName: string;
+  phone: string;
+  documentId: string; // CI
+  status: SupplierStatus;
+  registeredDate: string;
+  inventoryCount: number;
+}
+
+export interface Payout {
+  id: string;
+  supplierName: string;
+  amount: number;
+  currency: 'CUP' | 'USD';
+  period: string; // Ej: "Semana 42 - Oct"
+  status: PayoutStatus;
+  pendingOrders: number;
 }

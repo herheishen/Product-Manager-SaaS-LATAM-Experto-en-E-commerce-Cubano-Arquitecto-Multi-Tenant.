@@ -1,5 +1,5 @@
 
-import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits } from '../types';
+import { Product, Order, OrderStatus, KPI, PlanTier, PlanLimits, SupplierRequest, SupplierStatus, Payout, PayoutStatus } from '../types';
 
 // Mock Data - Mercado Cubano Realista (Combos, Aseo, Electrónica)
 const MOCK_PRODUCTS: Product[] = [
@@ -96,7 +96,9 @@ const MOCK_ORDERS: Order[] = [
     status: OrderStatus.CONFIRMED,
     date: '2023-10-25',
     items: [{ productId: 'p2', quantity: 1, productName: 'Zapatillas Nike AF1', price: 55 }],
-    commission: 20
+    commission: 20,
+    deliveryMethod: 'DELIVERY',
+    supplierId: 's1'
   },
   {
     id: 'ord-002',
@@ -107,7 +109,9 @@ const MOCK_ORDERS: Order[] = [
     status: OrderStatus.DELIVERED,
     date: '2023-10-24',
     items: [{ productId: 'p4', quantity: 1, productName: 'Aceite Girasol Caja 15L', price: 12000 }],
-    commission: 2500
+    commission: 2500,
+    deliveryMethod: 'PICKUP',
+    supplierId: 's3'
   },
   {
     id: 'ord-003',
@@ -118,20 +122,78 @@ const MOCK_ORDERS: Order[] = [
     status: OrderStatus.PENDING,
     date: '2023-10-26',
     items: [{ productId: 'p5', quantity: 1, productName: 'Powerbank Xiaomi', price: 35 }],
-    commission: 13
+    commission: 13,
+    deliveryMethod: 'DELIVERY',
+    supplierId: 's1'
   }
 ];
 
+// Admin Mock Data
+const MOCK_SUPPLIER_REQUESTS: SupplierRequest[] = [
+  {
+    id: 'req-01',
+    businessName: 'Bodega Vedado Import',
+    ownerName: 'Roberto Pérez',
+    phone: '+53 55551111',
+    documentId: '89101022334',
+    status: SupplierStatus.PENDING,
+    registeredDate: '2023-10-26',
+    inventoryCount: 150
+  },
+  {
+    id: 'req-02',
+    businessName: 'MIPYME "El Habanero"',
+    ownerName: 'Maria Rodríguez',
+    phone: '+53 52223344',
+    documentId: '75050599887',
+    status: SupplierStatus.PENDING,
+    registeredDate: '2023-10-25',
+    inventoryCount: 45
+  },
+  {
+    id: 'req-03',
+    businessName: 'TechnoCell 23',
+    ownerName: 'Alejandro G.',
+    phone: '+53 59990000',
+    documentId: '95121266778',
+    status: SupplierStatus.VERIFIED,
+    registeredDate: '2023-10-20',
+    inventoryCount: 300
+  }
+];
+
+const MOCK_PAYOUTS: Payout[] = [
+  {
+    id: 'pay-01',
+    supplierName: 'Importadora Vedado',
+    amount: 350,
+    currency: 'USD',
+    period: 'Semana 42 - Oct',
+    status: PayoutStatus.UNPAID,
+    pendingOrders: 12
+  },
+  {
+    id: 'pay-02',
+    supplierName: 'Abastos Habana',
+    amount: 45000,
+    currency: 'CUP',
+    period: 'Semana 42 - Oct',
+    status: PayoutStatus.PROCESSING,
+    pendingOrders: 5
+  }
+];
+
+// Simulate Network Latency
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const getProducts = async (): Promise<Product[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_PRODUCTS), 400); 
-  });
+  await delay(600);
+  return MOCK_PRODUCTS;
 };
 
 export const getOrders = async (): Promise<Order[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_ORDERS), 400);
-  });
+  await delay(500);
+  return MOCK_ORDERS;
 };
 
 export const getResellerKPIs = async (): Promise<KPI[]> => {
@@ -174,4 +236,25 @@ export const getPlanLimits = (tier: PlanTier): PlanLimits => {
     default:
       return getPlanLimits(PlanTier.FREE);
   }
+};
+
+// Admin Services
+export const getAdminStats = async (): Promise<KPI[]> => {
+  await delay(400);
+  return [
+    { label: 'GMV (Volumen Total)', value: '$12.5k USD', trend: 22, isPositive: true, subtext: 'Mes actual' },
+    { label: 'Ingresos SaaS', value: '$850 USD', trend: 8, isPositive: true, subtext: 'Suscripciones Activas' },
+    { label: 'Proveedores Pendientes', value: '5', trend: 0, isPositive: false, subtext: 'Requieren Verificación' },
+    { label: 'Gestores Activos', value: '142', trend: 12, isPositive: true, subtext: '12 nuevos esta semana' },
+  ];
+};
+
+export const getSupplierRequests = async (): Promise<SupplierRequest[]> => {
+  await delay(500);
+  return MOCK_SUPPLIER_REQUESTS;
+};
+
+export const getPendingPayouts = async (): Promise<Payout[]> => {
+  await delay(500);
+  return MOCK_PAYOUTS;
 };
