@@ -160,7 +160,8 @@ const MOCK_ORDERS: Order[] = [
     items: [{ productId: 'p2', quantity: 1, productName: 'Zapatillas Nike AF1', price: 55 }],
     commission: 20,
     deliveryMethod: 'DELIVERY',
-    supplierId: 's1'
+    deliveryAddress: 'Calle 23 e/ L y M, Vedado',
+    supplierId: 's1' // Linked to mock supplier
   },
   {
     id: 'ord-002',
@@ -173,6 +174,7 @@ const MOCK_ORDERS: Order[] = [
     items: [{ productId: 'p4', quantity: 1, productName: 'Aceite Girasol Caja 15L', price: 12000 }],
     commission: 2500,
     deliveryMethod: 'PICKUP',
+    deliveryAddress: 'Almacén Central',
     supplierId: 's3'
   },
   {
@@ -186,6 +188,21 @@ const MOCK_ORDERS: Order[] = [
     items: [{ productId: 'p5', quantity: 1, productName: 'Powerbank Xiaomi', price: 35 }],
     commission: 13,
     deliveryMethod: 'DELIVERY',
+    deliveryAddress: 'Ave 51, Marianao',
+    supplierId: 's1'
+  },
+  {
+    id: 'ord-004',
+    customerName: 'Maria Elena',
+    customerPhone: '+53 55554444',
+    total: 420,
+    currency: 'USD',
+    status: OrderStatus.READY_FOR_PICKUP,
+    date: '2023-10-26',
+    items: [{ productId: 'p3', quantity: 1, productName: 'Split Royal 1T', price: 420 }],
+    commission: 60,
+    deliveryMethod: 'DELIVERY',
+    deliveryAddress: 'Playa, Calle 1ra',
     supplierId: 's1'
   }
 ];
@@ -437,7 +454,19 @@ export const getProducts = async (): Promise<Product[]> => {
 
 export const getOrders = async (): Promise<Order[]> => {
   await delay(500);
-  return MOCK_ORDERS;
+  // Resellers see all mock orders in demo
+  return MOCK_ORDERS; 
+};
+
+export const updateOrderStatus = async (orderId: string, status: OrderStatus): Promise<boolean> => {
+  await delay(500);
+  return true;
+};
+
+export const getSupplierOrders = async (): Promise<Order[]> => {
+  await delay(500);
+  // Filter orders that would belong to 's1' (the mock logged-in supplier)
+  return MOCK_ORDERS.filter(o => o.supplierId === 's1');
 };
 
 export const getResellerKPIs = async (): Promise<KPI[]> => {
@@ -588,4 +617,25 @@ export const verifySupplier = async (supplierId: string, status: SupplierStatus)
 export const getPendingPayouts = async (): Promise<Payout[]> => {
   await delay(500);
   return MOCK_PAYOUTS;
+};
+
+// Supplier Services
+export const getSupplierStats = async (): Promise<KPI[]> => {
+  await delay(300);
+  return [
+    { label: 'Ventas Totales', value: '$840 USD', trend: 18, isPositive: true, subtext: 'Esta semana' },
+    { label: 'Inventario Valorizado', value: '$3,200 USD', trend: -5, isPositive: false, subtext: 'Necesita restock' },
+    { label: 'Revendedores Activos', value: '24', trend: 4, isPositive: true, subtext: 'Vendiendo tus productos' }
+  ];
+};
+
+export const getSupplierProducts = async (): Promise<Product[]> => {
+  await delay(400);
+  // Filter mock products as if they belong to this supplier
+  return MOCK_PRODUCTS.slice(0, 5); 
+};
+
+export const createProduct = async (productData: any): Promise<boolean> => {
+  await delay(1000);
+  return true;
 };

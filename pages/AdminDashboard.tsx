@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Users, CheckCircle, XCircle, AlertTriangle, FileText, 
-  DollarSign, Truck, Search, Activity, Eye, CreditCard, ShieldCheck, X
+  DollarSign, Truck, Search, Activity, Eye, CreditCard, ShieldCheck, X, Rocket, Calendar, CheckSquare
 } from 'lucide-react';
 import { 
   getAdminStats, getSupplierRequests, getPendingPayouts, 
@@ -76,9 +76,9 @@ const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Verification Queue Preview */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold text-slate-800 flex items-center">
               <ShieldCheckIcon className="w-5 h-5 mr-2 text-indigo-600" /> 
@@ -107,29 +107,59 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Payout Alert Preview */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <div className="flex justify-between items-center mb-4">
-             <h3 className="text-lg font-bold text-slate-800 flex items-center">
-               <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-               Liquidación Semanal
-             </h3>
-             <button onClick={() => setActiveTab('FINANCE')} className="text-sm text-indigo-600 hover:underline">Gestionar</button>
-          </div>
-          <div className="space-y-3">
-             {payouts.map(pay => (
-                <div key={pay.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                   <div>
-                      <p className="font-bold text-slate-900 text-sm">{pay.supplierName}</p>
-                      <p className="text-xs text-slate-500">{pay.pendingOrders} pedidos • {pay.period}</p>
-                   </div>
-                   <div className="text-right">
-                      <p className="font-bold text-slate-900 text-sm">{pay.currency === 'USD' ? '$' : ''}{pay.amount} <span className="text-[10px] text-slate-500">{pay.currency}</span></p>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded font-bold uppercase">Pendiente</span>
-                   </div>
-                </div>
-             ))}
-          </div>
+        {/* Roadmap Widget (MVP Status) */}
+        <div className="lg:col-span-1 bg-slate-900 text-white rounded-xl shadow-lg p-6 relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Rocket size={100} />
+           </div>
+           <div className="relative z-10">
+              <h3 className="text-lg font-bold flex items-center gap-2 mb-1">
+                 <Rocket className="text-sky-400" size={20} /> Roadmap MVP
+              </h3>
+              <p className="text-slate-400 text-xs mb-4">Progreso del lanzamiento (90 Días)</p>
+              
+              <div className="space-y-4">
+                 <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                       <span className="text-sky-400">Fase 1: Core (Beta)</span>
+                       <span className="text-white">95%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                       <div className="h-full bg-sky-500 w-[95%]"></div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">✓ Panel, Tienda, Auth, Catálogo</p>
+                 </div>
+
+                 <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                       <span className="text-slate-300">Fase 2: Financiero</span>
+                       <span className="text-slate-400">40%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                       <div className="h-full bg-slate-500 w-[40%]"></div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-1">En proceso: Wallet, Comisiones Auto</p>
+                 </div>
+
+                 <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                       <span className="text-slate-500">Fase 3: Logística</span>
+                       <span className="text-slate-600">10%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                       <div className="h-full bg-slate-600 w-[10%]"></div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-800 flex justify-between items-center">
+                 <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-slate-400"/>
+                    <span className="text-xs font-mono text-slate-300">Día 24/90</span>
+                 </div>
+                 <span className="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded border border-green-500/30">EN CURSO</span>
+              </div>
+           </div>
         </div>
       </div>
     </div>

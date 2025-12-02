@@ -1,5 +1,5 @@
 
-import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity, Zap } from 'lucide-react';
+import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity, Zap, ClipboardList } from 'lucide-react';
 
 export const APP_NAME = "Kiosko.cu";
 
@@ -25,6 +25,7 @@ export const NAVIGATION_ITEMS = {
   SUPPLIER: [
     { name: 'Dashboard', icon: ChartColumn, path: '/' },
     { name: 'Inventario', icon: Package, path: '/inventory' },
+    { name: 'Despacho y Envíos', icon: ClipboardList, path: '/dispatch' },
     { name: 'Gestores Activos', icon: Users, path: '/resellers' },
     { name: 'Finanzas', icon: DollarSign, path: '/finance' },
   ],

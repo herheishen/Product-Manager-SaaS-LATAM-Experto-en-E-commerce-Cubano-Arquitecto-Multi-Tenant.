@@ -199,6 +199,10 @@ export interface Payout {
   pendingOrders: number;
 }
 
+export interface SupplierStats extends KPI {
+  icon?: string;
+}
+
 // Interfaces IA
 export interface AIPrediction {
   productId: string;

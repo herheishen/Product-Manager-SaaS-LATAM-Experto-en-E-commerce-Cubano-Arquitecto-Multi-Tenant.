@@ -4,7 +4,10 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Marketplace from './pages/Marketplace';
 import StoreManager from './pages/StoreManager';
+import Orders from './pages/Orders';
 import AdminDashboard from './pages/AdminDashboard';
+import SupplierDashboard from './pages/SupplierDashboard';
+import SupplierDispatch from './pages/SupplierDispatch';
 import PublicStore from './pages/PublicStore';
 import Subscription from './pages/Subscription';
 import AIChatbot from './components/AIChatbot';
@@ -65,7 +68,7 @@ const App: React.FC = () => {
         case '/my-store':
           return <StoreManager />;
         case '/orders':
-          return <div className="p-10 text-center text-slate-500">Gestión de Pedidos Completa (Mock)</div>;
+          return <Orders />;
         case '/subscription':
           return <Subscription />;
         default:
@@ -77,11 +80,15 @@ const App: React.FC = () => {
     if (role === UserRole.SUPPLIER) {
       switch (currentPath) {
         case '/':
-           return <div className="p-10 text-center text-slate-500">Dashboard Proveedor (En Desarrollo)</div>;
+           return <SupplierDashboard />;
         case '/inventory':
-           return <div className="p-10 text-center text-slate-500">Inventario y Stock (Mock)</div>;
+           return <SupplierDashboard />;
+        case '/dispatch':
+           return <SupplierDispatch />;
+        case '/finance':
+           return <div className="p-10 text-center text-slate-500">Finanzas Proveedor (Liquidaciones Pendientes)</div>;
         default:
-           return <div className="p-10 text-center text-slate-500">Dashboard Proveedor (En Desarrollo)</div>;
+           return <SupplierDashboard />;
       }
     }
 
