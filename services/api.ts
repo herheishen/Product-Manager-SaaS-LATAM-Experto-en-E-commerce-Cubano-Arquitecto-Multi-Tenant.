@@ -451,6 +451,11 @@ export const createProduct = async (productData: any): Promise<boolean> => {
   return true;
 };
 
+export const updateProductStock = async (productId: string, delta: number): Promise<boolean> => {
+  await delay(200);
+  return true;
+};
+
 // AI Services
 export const generateSmartCopy = async (productName: string, price: number, currency: string, description: string): Promise<string> => {
   await delay(600);

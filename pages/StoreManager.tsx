@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Share2, Save, ExternalLink, MessageCircle, DollarSign, Wallet, Zap, Package, Edit2, Eye, EyeOff, Search, ArrowRight, Wand2, Calculator, X, Rocket, Send, Copy, Image as ImageIcon, Download } from 'lucide-react';
+import { Share2, Save, ExternalLink, MessageCircle, DollarSign, Wallet, Zap, Package, Edit2, Eye, EyeOff, Search, ArrowRight, Wand2, Calculator, X, Rocket, Send, Copy, Image as ImageIcon, Download, AlertTriangle } from 'lucide-react';
 import { StoreConfig, PlanTier, StoreProduct, AIPriceSuggestion } from '../types';
 import { getMyStoreProducts, generateSmartCopy, getSmartPriceSuggestion, generateSocialAsset } from '../services/api';
 
@@ -37,6 +37,7 @@ const StoreManager: React.FC = () => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [hasPriceErrors, setHasPriceErrors] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'CATALOG' || activeTab === 'MARKETING') {
@@ -48,7 +49,17 @@ const StoreManager: React.FC = () => {
     }
   }, [activeTab]);
 
+  // Validation Effect
+  useEffect(() => {
+    const error = products.some(p => p.isActive && p.customRetailPrice < p.priceWholesale * 1.05);
+    setHasPriceErrors(error);
+  }, [products]);
+
   const handleSave = () => {
+    if (hasPriceErrors) {
+       alert("Tienes productos con margen de ganancia inseguro (< 5%). Corrígelos antes de guardar.");
+       return;
+    }
     setSaving(true);
     setTimeout(() => setSaving(false), 1500);
   };
@@ -118,52 +129,51 @@ const StoreManager: React.FC = () => {
   };
 
   const renderConfig = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-2">
       {/* Settings Form */}
       <div className="lg:col-span-2 space-y-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Identidad Visual</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Comercial</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Nombre Comercial</label>
               <input 
                 type="text" 
                 value={config.name}
                 onChange={e => setConfig({...config, name: e.target.value})}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow"
+                className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all outline-none font-medium"
                 placeholder="Ej: Variedades Marianao"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Enlace Público (Subdominio)</label>
-              <div className="flex shadow-sm rounded-md">
-                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm">
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Enlace Público (Subdominio)</label>
+              <div className="flex shadow-sm rounded-xl overflow-hidden">
+                <span className="inline-flex items-center px-4 bg-slate-100 border-r border-slate-200 text-slate-500 text-sm font-medium">
                   kiosko.cu/
                 </span>
                 <input 
                   type="text" 
                   value={config.subdomain.split('.')[0]}
                   readOnly
-                  className="flex-1 min-w-0 block w-full px-3 py-2 border border-slate-300 rounded-none rounded-r-md text-slate-900 font-medium sm:text-sm focus:ring-sky-500 focus:border-sky-500"
+                  className="flex-1 min-w-0 block w-full px-4 py-3 bg-white text-slate-900 font-bold focus:ring-2 focus:ring-sky-500 outline-none"
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-1 flex items-center">
+              <p className="text-xs text-slate-400 mt-2 flex items-center font-medium">
                 <ExternalLink size={12} className="mr-1" /> Tu tienda es visible en esta dirección
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Métodos de Cobro (Cuba)</h2>
-          <p className="text-sm text-slate-500 mb-4">Selecciona qué formas de pago aceptas. Esto aparecerá en el mensaje de pedido.</p>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Métodos de Cobro</h2>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button 
               onClick={() => togglePayment('cash')}
-              className={`p-3 rounded-lg border text-left flex items-center transition-all ${config.acceptedPayments.cash ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'border-slate-200 hover:border-slate-300'}`}
+              className={`p-4 rounded-xl border text-left flex items-center transition-all ${config.acceptedPayments.cash ? 'border-green-500 bg-green-50/50 ring-1 ring-green-500' : 'border-slate-200 hover:border-slate-300'}`}
             >
-              <div className={`p-2 rounded-full mr-3 ${config.acceptedPayments.cash ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+              <div className={`p-2.5 rounded-full mr-3 ${config.acceptedPayments.cash ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
                 <DollarSign size={20} />
               </div>
               <div>
@@ -174,9 +184,9 @@ const StoreManager: React.FC = () => {
             
             <button 
               onClick={() => togglePayment('transfermovil')}
-              className={`p-3 rounded-lg border text-left flex items-center transition-all ${config.acceptedPayments.transfermovil ? 'border-sky-500 bg-sky-50 ring-1 ring-sky-500' : 'border-slate-200 hover:border-slate-300'}`}
+              className={`p-4 rounded-xl border text-left flex items-center transition-all ${config.acceptedPayments.transfermovil ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500' : 'border-slate-200 hover:border-slate-300'}`}
             >
-              <div className={`p-2 rounded-full mr-3 ${config.acceptedPayments.transfermovil ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-400'}`}>
+              <div className={`p-2.5 rounded-full mr-3 ${config.acceptedPayments.transfermovil ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-400'}`}>
                 <Wallet size={20} />
               </div>
               <div>
@@ -187,9 +197,9 @@ const StoreManager: React.FC = () => {
 
             <button 
               onClick={() => togglePayment('zelle')}
-              className={`p-3 rounded-lg border text-left flex items-center transition-all ${config.acceptedPayments.zelle ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-500' : 'border-slate-200 hover:border-slate-300'}`}
+              className={`p-4 rounded-xl border text-left flex items-center transition-all ${config.acceptedPayments.zelle ? 'border-purple-500 bg-purple-50/50 ring-1 ring-purple-500' : 'border-slate-200 hover:border-slate-300'}`}
             >
-               <div className={`p-2 rounded-full mr-3 ${config.acceptedPayments.zelle ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-400'}`}>
+               <div className={`p-2.5 rounded-full mr-3 ${config.acceptedPayments.zelle ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-400'}`}>
                 <Zap size={20} />
               </div>
               <div>
@@ -200,43 +210,33 @@ const StoreManager: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Recepción de Pedidos</h2>
-          <div className="p-4 bg-green-50 rounded-lg mb-4 border border-green-100 flex gap-3">
-             <MessageCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+          <div className="p-4 bg-emerald-50 rounded-xl mb-4 border border-emerald-100 flex gap-3">
+             <MessageCircle className="w-6 h-6 text-emerald-600 flex-shrink-0" />
              <div>
-                <h3 className="text-sm font-bold text-green-900">Sistema "WhatsApp First"</h3>
-                <p className="text-xs text-green-700 mt-1 leading-relaxed">
+                <h3 className="text-sm font-bold text-emerald-900">Sistema "WhatsApp First"</h3>
+                <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
                   Cuando un cliente finalice la compra, se abrirá su WhatsApp con un mensaje detallado listo para enviarte. 
-                  Tú confirmas el pago y gestionas el envío desde aquí.
                 </p>
              </div>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Tu WhatsApp (Gestor)</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tu WhatsApp (Gestor)</label>
             <input 
               type="text" 
               value={config.whatsappNumber}
               onChange={e => setConfig({...config, whatsappNumber: e.target.value})}
               placeholder="+53 5xxx xxxx"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 font-mono"
+              className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all outline-none font-mono font-medium"
             />
-            <p className="text-xs text-slate-500 mt-1">Es vital incluir el código de país correcto (+53).</p>
           </div>
         </div>
       </div>
 
       {/* Live Preview */}
-      <div className="lg:col-span-1 hidden lg:block">
-        <div className="sticky top-6">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Vista Previa Móvil</h3>
-            <a href="/store/demo" target="_blank" className="text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded hover:bg-sky-200 flex items-center">
-              Abrir Tienda <ExternalLink size={10} className="ml-1"/>
-            </a>
-          </div>
-          
+      <div className="lg:col-span-1 hidden lg:block sticky top-6 h-full">
           <div className="border-[8px] border-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl bg-white h-[640px] flex flex-col relative mx-auto max-w-[320px]">
              {/* Mobile Notch */}
              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-slate-900 rounded-b-xl z-20"></div>
@@ -264,148 +264,128 @@ const StoreManager: React.FC = () => {
                  </div>
                ))}
                
-               {/* Mock Cart Summary */}
-               <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mt-4">
-                  <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span className="font-bold">4,500 CUP</span>
-                  </div>
-                  <div className="flex justify-between text-xs mb-3">
-                      <span className="text-gray-600">Envío (Habana)</span>
-                      <span className="font-bold">300 CUP</span>
-                  </div>
-                  <div className="border-t border-dashed border-gray-200 pt-2 mb-2">
-                      <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Pagos Aceptados:</p>
-                      <div className="flex gap-1 flex-wrap">
-                          {config.acceptedPayments.cash && <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200">Efectivo</span>}
-                          {config.acceptedPayments.transfermovil && <span className="text-[9px] bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded border border-sky-200">Transfermóvil</span>}
-                          {config.acceptedPayments.zelle && <span className="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200">Zelle</span>}
-                      </div>
-                  </div>
-               </div>
-
                {/* Sticky Cart Button Mock */}
-               <div className="p-3 bg-white border-t border-gray-100 z-10">
-                 <div className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-2.5 rounded-full text-center text-sm font-bold flex items-center justify-center gap-2 shadow-lg transition-colors cursor-pointer">
+               <div className="p-3 bg-white border-t border-gray-100 z-10 mt-auto">
+                 <div className="w-full bg-[#25D366] text-white py-2.5 rounded-full text-center text-sm font-bold flex items-center justify-center gap-2 shadow-lg">
                    <MessageCircle size={18} fill="white" className="text-white" />
-                   Enviar Pedido (4,800 CUP)
+                   Enviar Pedido
                  </div>
-                 <p className="text-[9px] text-center text-gray-400 mt-1.5">Serás redirigido a WhatsApp</p>
                </div>
             </div>
-            
-            <button className="w-full mt-6 flex items-center justify-center px-4 py-2 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm font-medium">
-              <Share2 size={16} className="mr-2" /> Copiar Link de Tienda
-            </button>
           </div>
-        </div>
       </div>
     </div>
   );
 
   const renderCatalog = () => (
-    <div className="space-y-6">
-       <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 flex items-start gap-3">
-          <Edit2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+       <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex items-start gap-4 shadow-sm">
+          <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+            <Edit2 className="w-5 h-5" />
+          </div>
           <div>
             <h3 className="text-sm font-bold text-blue-900">Control de Precios y Margen</h3>
-            <p className="text-xs text-blue-700 mt-1">
+            <p className="text-xs text-blue-700 mt-1 leading-relaxed max-w-2xl">
               Aquí decides cuánto ganas. El "Costo Mayorista" es fijo, pero puedes subir tu "Precio de Venta" tanto como quieras. 
-              Recuerda que precios competitivos venden más rápido.
+              <span className="font-bold"> El sistema bloqueará precios que generen menos del 5% de margen.</span>
             </p>
           </div>
        </div>
 
-       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-3">
-             <h2 className="font-bold text-slate-800">Tus Productos ({products.length})</h2>
-             <div className="relative w-full md:w-auto">
-               <input type="text" placeholder="Buscar..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+             <div className="flex items-center gap-2">
+                <h2 className="font-bold text-slate-800 text-lg">Tus Productos</h2>
+                <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">{products.length}</span>
+             </div>
+             <div className="relative w-full md:w-64">
+               <input type="text" placeholder="Buscar..." className="pl-9 pr-4 py-2 border border-slate-200 bg-slate-50 rounded-xl text-sm w-full focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all outline-none" />
                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
              </div>
           </div>
           
           {loadingProducts ? (
-            <div className="p-10 text-center text-slate-500">Cargando inventario...</div>
+            <div className="p-20 text-center text-slate-500">Cargando inventario...</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                   <tr>
-                    <th className="px-4 py-3 w-16">Imagen</th>
-                    <th className="px-4 py-3">Producto / SKU</th>
-                    <th className="px-4 py-3">Costo (Mayorista)</th>
-                    <th className="px-4 py-3 w-40">Tu Precio (Retail)</th>
-                    <th className="px-4 py-3">Tu Ganancia</th>
-                    <th className="px-4 py-3">Herramientas IA</th>
-                    <th className="px-4 py-3">Estado</th>
-                    <th className="px-4 py-3 text-right">Acciones</th>
+                    <th className="px-6 py-4 w-20">Imagen</th>
+                    <th className="px-6 py-4">Producto</th>
+                    <th className="px-6 py-4">Costo (Mayorista)</th>
+                    <th className="px-6 py-4 w-48">Tu Precio (Retail)</th>
+                    <th className="px-6 py-4">Tu Ganancia</th>
+                    <th className="px-6 py-4">Herramientas IA</th>
+                    <th className="px-6 py-4">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {products.map(product => (
-                    <tr key={product.id} className={`hover:bg-slate-50 transition-colors ${!product.isActive ? 'opacity-60 bg-slate-50' : ''}`}>
-                      <td className="px-4 py-3">
-                        <img src={product.imageUrl} alt="" className="w-10 h-10 rounded-md object-cover border border-slate-200" />
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-bold text-slate-800">{product.name}</p>
-                        <p className="text-[10px] text-slate-400">Prov: {product.supplierName}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-slate-600 bg-slate-100 px-2 py-1 rounded text-xs">
-                          {product.priceWholesale} {product.currency}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                         <div className="flex items-center">
-                            <span className="text-slate-400 text-xs mr-1">$</span>
-                            <input 
-                              type="number" 
-                              value={product.customRetailPrice}
-                              onChange={(e) => handlePriceChange(product.id, e.target.value)}
-                              className="w-24 px-2 py-1 border border-slate-300 rounded font-bold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                            />
-                         </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`font-bold ${product.profitMargin > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                           {product.profitMargin > 0 ? '+' : ''}{product.profitMargin} {product.currency}
-                        </span>
-                        <div className="text-[10px] text-slate-400">Margen: {Math.round((product.profitMargin / product.priceWholesale) * 100)}%</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                           <button 
-                             onClick={() => handleGenerateCopy(product)}
-                             className="p-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors"
-                             title="Generar Copy de Venta"
-                           >
-                             <Wand2 size={16} />
-                           </button>
-                           <button 
-                             onClick={() => handleSmartPrice(product)}
-                             className="p-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors"
-                             title="Sugerir Precio IA"
-                           >
-                             <Calculator size={16} />
-                           </button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button 
-                          onClick={() => toggleProductActive(product.id)}
-                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-bold uppercase ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-500'}`}
-                        >
-                          {product.isActive ? <Eye size={12}/> : <EyeOff size={12}/>}
-                          {product.isActive ? 'Visible' : 'Oculto'}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                         <button className="text-slate-400 hover:text-red-500 text-xs font-medium">Eliminar</button>
-                      </td>
-                    </tr>
-                  ))}
+                  {products.map(product => {
+                    const isMarginLow = product.customRetailPrice < product.priceWholesale * 1.05;
+                    
+                    return (
+                      <tr key={product.id} className={`hover:bg-slate-50/80 transition-colors ${!product.isActive ? 'opacity-60 bg-slate-50' : ''}`}>
+                        <td className="px-6 py-4">
+                          <img src={product.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover border border-slate-200 bg-slate-100" />
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-slate-800">{product.name}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{product.category} • {product.supplierName}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-mono text-slate-600 font-medium">
+                            {product.priceWholesale} {product.currency}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                           <div className="relative">
+                              <span className="absolute left-3 top-2 text-slate-400 text-xs">$</span>
+                              <input 
+                                type="number" 
+                                value={product.customRetailPrice}
+                                onChange={(e) => handlePriceChange(product.id, e.target.value)}
+                                className={`w-full pl-6 pr-3 py-2 border rounded-lg font-bold text-slate-800 focus:ring-2 outline-none transition-all ${isMarginLow ? 'border-red-300 bg-red-50 focus:ring-red-500' : 'border-slate-200 focus:ring-sky-500'}`}
+                              />
+                           </div>
+                           {isMarginLow && <p className="text-[10px] text-red-500 font-bold mt-1 flex items-center"><AlertTriangle size={10} className="mr-1"/> Margen bajo</p>}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`font-bold text-base ${product.profitMargin > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                             {product.profitMargin > 0 ? '+' : ''}{product.profitMargin} {product.currency}
+                          </span>
+                          <div className="text-[10px] text-slate-400 font-medium">Margen: {Math.round((product.profitMargin / product.priceWholesale) * 100)}%</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                             <button 
+                               onClick={() => handleGenerateCopy(product)}
+                               className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100"
+                               title="Generar Copy de Venta"
+                             >
+                               <Wand2 size={16} />
+                             </button>
+                             <button 
+                               onClick={() => handleSmartPrice(product)}
+                               className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100"
+                               title="Sugerir Precio IA"
+                             >
+                               <Calculator size={16} />
+                             </button>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <button 
+                            onClick={() => toggleProductActive(product.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${product.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
+                          >
+                            {product.isActive ? <Eye size={14}/> : <EyeOff size={14}/>}
+                            {product.isActive ? 'Visible' : 'Oculto'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -415,56 +395,34 @@ const StoreManager: React.FC = () => {
   );
 
   const renderMarketing = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Viraliza tu Tienda */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
              <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                <Rocket className="text-sky-500" /> Viraliza tu Tienda
              </h2>
              <p className="text-sm text-slate-500 mb-6">Comparte el enlace de tu tienda en tus redes sociales favoritas para atraer clientes.</p>
              
              <div className="space-y-3">
-                <button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                <button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-100">
                   <MessageCircle size={20} /> Compartir en WhatsApp
                 </button>
-                <button className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                <button className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-sky-100">
                   <Send size={20} /> Compartir en Telegram
                 </button>
-                <div className="flex gap-2">
-                   <div className="flex-1 bg-slate-100 rounded-lg px-3 py-2 text-sm text-slate-600 truncate border border-slate-200">
-                      kiosko.cu/tienda-demo
-                   </div>
-                   <button className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300">
-                      <Copy size={20} />
-                   </button>
-                </div>
-             </div>
-
-             <div className="mt-6 pt-6 border-t border-slate-100">
-                <h3 className="font-bold text-sm text-slate-700 mb-2">Programa de Referidos</h3>
-                <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
-                   <p className="text-xs text-indigo-700 mb-3">
-                     Gana <strong>$5 USD</strong> por cada amigo que cree su tienda y venda sus primeros 10 productos.
-                   </p>
-                   <button className="text-xs font-bold text-indigo-600 flex items-center hover:underline">
-                      Copiar Enlace de Referido <Copy size={12} className="ml-1"/>
-                   </button>
-                </div>
              </div>
           </div>
 
           {/* Generador de Contenido */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
              <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                <ImageIcon className="text-pink-500" /> Creador de Stories
              </h2>
-             <p className="text-sm text-slate-500 mb-6">Crea imágenes promocionales para tus Estados de WhatsApp en segundos.</p>
-
-             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4 h-64 flex flex-col items-center justify-center">
+             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 h-64 flex flex-col items-center justify-center">
                 {generatedAssetUrl ? (
                    <div className="relative w-full h-full group">
-                      <img src={generatedAssetUrl} alt="Story Generated" className="w-full h-full object-cover rounded-lg" />
+                      <img src={generatedAssetUrl} alt="Story Generated" className="w-full h-full object-cover rounded-lg shadow-sm" />
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
                          <a href={generatedAssetUrl} download className="bg-white text-slate-900 px-4 py-2 rounded-full font-bold flex items-center gap-2 hover:scale-105 transition-transform">
                             <Download size={18} /> Descargar
@@ -479,20 +437,20 @@ const StoreManager: React.FC = () => {
                 ) : (
                    <div className="text-center text-slate-400">
                       <ImageIcon size={48} className="mx-auto mb-2 opacity-20" />
-                      <p className="text-sm">Selecciona un producto abajo</p>
+                      <p className="text-sm font-medium">Selecciona un producto abajo</p>
                    </div>
                 )}
              </div>
 
              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Elige un Producto</label>
-                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                <label className="text-xs font-bold text-slate-500 uppercase mb-3 block">Elige un Producto</label>
+                <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                    {products.slice(0, 5).map(p => (
                       <button 
                         key={p.id}
                         onClick={() => handleGenerateAsset(p.id)}
                         disabled={!!assetGenerating}
-                        className="flex-shrink-0 w-16 h-16 rounded-lg border border-slate-200 relative overflow-hidden hover:ring-2 hover:ring-pink-500 transition-all"
+                        className="flex-shrink-0 w-16 h-16 rounded-xl border-2 border-slate-100 relative overflow-hidden hover:border-pink-500 transition-all shadow-sm"
                       >
                          <img src={p.imageUrl} className="w-full h-full object-cover" />
                       </button>
@@ -505,22 +463,23 @@ const StoreManager: React.FC = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20">
+    <div className="max-w-6xl mx-auto space-y-8 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Gestión de Tienda</h1>
-          <p className="text-slate-500">Administra tu vitrina y catálogo de productos.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Gestión de Tienda</h1>
+          <p className="text-slate-500 font-medium">Administra tu vitrina y catálogo de productos.</p>
         </div>
         
-        <div className="flex gap-2 w-full md:w-auto">
-          <a href="/store/preview" target="_blank" className="flex items-center justify-center px-4 py-2.5 border border-slate-300 text-slate-700 bg-white rounded-lg hover:bg-slate-50 transition-colors shadow-sm font-medium flex-1 md:flex-none">
+        <div className="flex gap-3 w-full md:w-auto">
+          <a href="/store/preview" target="_blank" className="flex items-center justify-center px-5 py-2.5 border border-slate-200 text-slate-700 bg-white rounded-xl hover:bg-slate-50 transition-colors shadow-sm font-bold flex-1 md:flex-none">
             <ExternalLink size={18} className="mr-2" /> Ver Tienda
           </a>
           <button 
             onClick={handleSave}
-            className="flex items-center justify-center px-6 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors shadow-sm font-medium flex-1 md:flex-none"
+            disabled={saving || hasPriceErrors}
+            className={`flex items-center justify-center px-6 py-2.5 rounded-xl text-white shadow-lg transition-all font-bold flex-1 md:flex-none ${hasPriceErrors ? 'bg-red-500 hover:bg-red-600 shadow-red-200 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 shadow-slate-200'}`}
           >
-            {saving ? 'Guardando...' : <><Save size={18} className="mr-2" /> Guardar Todo</>}
+            {saving ? 'Guardando...' : hasPriceErrors ? 'Corrige Errores' : <><Save size={18} className="mr-2" /> Guardar Todo</>}
           </button>
         </div>
       </div>
@@ -530,17 +489,17 @@ const StoreManager: React.FC = () => {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('CONFIG')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-bold text-sm transition-colors ${
               activeTab === 'CONFIG'
                 ? 'border-sky-500 text-sky-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            Configuración General
+            Configuración
           </button>
           <button
             onClick={() => setActiveTab('CATALOG')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-bold text-sm transition-colors flex items-center ${
               activeTab === 'CATALOG'
                 ? 'border-sky-500 text-sky-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -550,7 +509,7 @@ const StoreManager: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('MARKETING')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-bold text-sm transition-colors flex items-center ${
               activeTab === 'MARKETING'
                 ? 'border-sky-500 text-sky-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -568,64 +527,32 @@ const StoreManager: React.FC = () => {
       {/* Copy Generator Modal */}
        {copyModalOpen && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCopyModalOpen(false)}></div>
-           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg z-10 animate-in fade-in zoom-in duration-200">
-              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-indigo-50">
+           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setCopyModalOpen(false)}></div>
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg z-10 animate-in fade-in zoom-in duration-200">
+              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-indigo-50/50">
                  <h3 className="font-bold text-indigo-900 flex items-center gap-2">
                     <Wand2 size={20} /> Generador de Copy (Revolico)
                  </h3>
-                 <button onClick={() => setCopyModalOpen(false)}><X size={20} className="text-indigo-400"/></button>
+                 <button onClick={() => setCopyModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={20} className="text-indigo-400"/></button>
               </div>
               <div className="p-6">
                  {isGenerating ? (
                    <div className="flex flex-col items-center justify-center py-10 text-slate-400">
                       <Wand2 className="animate-spin mb-4 text-indigo-500" size={32} />
-                      <p>Creando el texto perfecto para Cuba...</p>
+                      <p className="font-medium text-sm">Creando el texto perfecto para Cuba...</p>
                    </div>
                  ) : (
                    <>
                      <textarea 
-                        className="w-full h-48 border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none font-mono bg-slate-50"
+                        className="w-full h-48 border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none font-mono bg-slate-50"
                         value={generatedCopy}
                         readOnly
                      />
                      <div className="mt-4 flex gap-3">
-                       <button onClick={() => {navigator.clipboard.writeText(generatedCopy); setCopyModalOpen(false)}} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700">Copiar Texto</button>
+                       <button onClick={() => {navigator.clipboard.writeText(generatedCopy); setCopyModalOpen(false)}} className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">Copiar Texto</button>
                      </div>
                    </>
                  )}
-              </div>
-           </div>
-         </div>
-       )}
-
-       {/* Smart Price Modal */}
-       {priceModalOpen && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setPriceModalOpen(false)}></div>
-           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md z-10 animate-in fade-in zoom-in duration-200">
-              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-green-50">
-                 <h3 className="font-bold text-green-900 flex items-center gap-2">
-                    <Calculator size={20} /> Precio Inteligente (Zona Playa)
-                 </h3>
-                 <button onClick={() => setPriceModalOpen(false)}><X size={20} className="text-green-600"/></button>
-              </div>
-              <div className="p-6">
-                 {isGenerating ? (
-                   <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-                      <Calculator className="animate-bounce mb-4 text-green-500" size={32} />
-                      <p>Calculando markup por zona...</p>
-                   </div>
-                 ) : priceSuggestion ? (
-                   <div className="text-center">
-                     <p className="text-sm text-slate-500 mb-2">Precio Sugerido:</p>
-                     <div className="text-4xl font-bold text-slate-900 mb-4">{priceSuggestion.suggestedPrice}</div>
-                     <div className="bg-slate-50 p-3 rounded-lg text-xs text-slate-600 mb-6 border border-slate-200 text-left">
-                        <strong>Por qué:</strong> {priceSuggestion.reasoning}
-                     </div>
-                     <button onClick={applySuggestedPrice} className="w-full bg-green-600 text-white py-2.5 rounded-lg font-bold hover:bg-green-700">Aplicar Precio</button>
-                   </div>
-                 ) : null}
               </div>
            </div>
          </div>
