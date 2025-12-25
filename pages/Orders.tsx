@@ -1,7 +1,8 @@
 
+
 import React, { useEffect, useState } from 'react';
-import { Package, Clock, CheckCircle, Truck, XCircle, Search, Filter, DollarSign, Calendar } from 'lucide-react';
-import { getOrders } from '../services/api';
+import { Package, Clock, CheckCircle, Truck, XCircle, Search, Filter, DollarSign, Calendar, Eye, CreditCard } from 'lucide-react';
+import { getResellerOrders } from '../services/api';
 import { Order, OrderStatus } from '../types';
 
 const Orders: React.FC = () => {
@@ -11,7 +12,7 @@ const Orders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
 
   useEffect(() => {
-    getOrders().then(data => {
+    getResellerOrders().then(data => {
       setOrders(data);
       setLoading(false);
     });
@@ -20,11 +21,11 @@ const Orders: React.FC = () => {
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case OrderStatus.PENDING: return <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Clock size={12}/> Pendiente</span>;
-      case OrderStatus.CONFIRMED: return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle size={12}/> Confirmado</span>;
-      case OrderStatus.READY_FOR_PICKUP: return <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Package size={12}/> Listo Pickup</span>;
+      case OrderStatus.CONFIRMED: return <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle size={12}/> Confirmado</span>;
+      case OrderStatus.READY_FOR_PICKUP: return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Package size={12}/> Listo Pickup</span>;
       case OrderStatus.SHIPPED: return <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Truck size={12}/> En Camino</span>;
-      case OrderStatus.DELIVERED: return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle size={12}/> Entregado</span>;
-      case OrderStatus.CANCELLED: return <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><XCircle size={12}/> Cancelado</span>;
+      case OrderStatus.DELIVERED: return <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle size={12}/> Entregado</span>;
+      case OrderStatus.CANCELLED: return <span className="bg-rose-100 text-rose-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><XCircle size={12}/> Cancelado</span>;
       default: return <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-xs font-bold">{status}</span>;
     }
   };
@@ -32,7 +33,7 @@ const Orders: React.FC = () => {
   const filteredOrders = orders.filter(o => {
     const matchesSearch = o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) || o.id.includes(searchTerm);
     if (statusFilter === 'ALL') return matchesSearch;
-    if (statusFilter === 'PENDING') return matchesSearch && (o.status === OrderStatus.PENDING || o.status === OrderStatus.CONFIRMED);
+    if (statusFilter === 'PENDING') return matchesSearch && (o.status === OrderStatus.PENDING || o.status === OrderStatus.CONFIRMED || o.status === OrderStatus.READY_FOR_PICKUP || o.status === OrderStatus.SHIPPED);
     if (statusFilter === 'COMPLETED') return matchesSearch && (o.status === OrderStatus.DELIVERED);
     return matchesSearch;
   });
@@ -53,7 +54,7 @@ const Orders: React.FC = () => {
              <input 
               type="text" 
               placeholder="Buscar cliente o ID..."
-              className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 w-full shadow-sm"
+              className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-full shadow-sm text-slate-900 bg-slate-50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
              />
@@ -61,7 +62,7 @@ const Orders: React.FC = () => {
            <select 
              value={statusFilter}
              onChange={(e) => setStatusFilter(e.target.value as any)}
-             className="px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+             className="px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-900 shadow-sm"
            >
              <option value="ALL">Todos</option>
              <option value="PENDING">En Proceso</option>
@@ -104,11 +105,11 @@ const Orders: React.FC = () => {
                        {getStatusBadge(order.status)}
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-800">
-                       {order.total} <span className="text-xs font-normal text-slate-500">{order.currency}</span>
+                       {order.total.toFixed(2)} <span className="text-xs font-normal text-slate-500">{order.currency}</span>
                     </td>
                     <td className="px-6 py-4">
-                       <span className="text-green-600 font-bold flex items-center">
-                          +{order.commission} {order.currency}
+                       <span className="text-emerald-600 font-bold flex items-center">
+                          +{order.commission.toFixed(2)} {order.currency}
                        </span>
                     </td>
                     <td className="px-6 py-4 text-slate-500 text-xs">
@@ -117,7 +118,9 @@ const Orders: React.FC = () => {
                        </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <button className="text-sky-600 font-bold text-xs hover:underline">Ver Detalle</button>
+                       <button onClick={() => console.log('Ver detalle de orden', order.id)} className="text-indigo-600 font-bold text-xs hover:underline flex items-center justify-end gap-1">
+                          <Eye size={14}/> Detalle
+                       </button>
                     </td>
                   </tr>
                 ))
@@ -128,15 +131,18 @@ const Orders: React.FC = () => {
       </div>
       
       {/* Profit Summary Widget */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-6 text-white flex justify-between items-center shadow-lg">
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
          <div>
-            <h3 className="font-bold text-lg">Balance Pendiente</h3>
-            <p className="text-slate-400 text-xs">Dinero que debes transferir a la plataforma para liberar envíos.</p>
+            <h3 className="font-bold text-lg">Balance Pendiente (A Pagar)</h3>
+            <p className="text-slate-400 text-xs mt-1">Dinero que debes a la plataforma o proveedores para liberar envíos.</p>
          </div>
-         <div className="text-right">
+         <div className="text-right flex flex-col items-center md:items-end">
             <span className="text-3xl font-bold block">$45.00 <span className="text-sm font-normal">USD</span></span>
-            <button className="mt-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-               Pagar Deuda
+            <button 
+              onClick={() => console.log('Abrir modal de pago de deuda')}
+              className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1 active:scale-95"
+            >
+               <CreditCard size={14}/> Pagar Deuda
             </button>
          </div>
       </div>

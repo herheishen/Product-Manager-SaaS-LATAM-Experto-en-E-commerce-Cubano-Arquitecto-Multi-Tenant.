@@ -1,6 +1,7 @@
 
+
 import React, { useEffect, useState } from 'react';
-import { Package, Truck, CheckSquare, Search, MapPin, Clock } from 'lucide-react';
+import { Package, Truck, CheckSquare, Search, MapPin, Clock, ArrowRight } from 'lucide-react';
 import { getSupplierOrders, updateOrderStatus } from '../services/api';
 import { Order, OrderStatus } from '../types';
 
@@ -13,7 +14,7 @@ const SupplierDispatch: React.FC = () => {
   }, []);
 
   const fetchOrders = async () => {
-    const data = await getSupplierOrders();
+    const data = await getSupplierOrders('s-cerro'); // Mock specific supplier ID
     setOrders(data);
     setLoading(false);
   };
@@ -34,7 +35,7 @@ const SupplierDispatch: React.FC = () => {
     <div className="space-y-6">
        <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="text-sky-500"/> Centro de Despacho
+            <Package className="text-indigo-500"/> Centro de Despacho
           </h1>
           <p className="text-slate-500">Gestiona los pedidos pagados y coordina la logística de entrega.</p>
        </div>
@@ -76,6 +77,7 @@ const SupplierDispatch: React.FC = () => {
                                  <li key={idx}>• {item.quantity}x {item.productName}</li>
                               ))}
                            </ul>
+                           <p className="text-sm text-slate-800 font-bold mt-2">Total: {order.total.toFixed(2)} {order.currency}</p>
                         </div>
                      </div>
                   </div>
@@ -84,24 +86,29 @@ const SupplierDispatch: React.FC = () => {
                   <div className="bg-slate-50 p-6 flex flex-col justify-center gap-3 border-l border-slate-100 md:w-64">
                      <p className="text-xs text-center text-slate-400 mb-2">Acciones de Logística</p>
                      
-                     {order.status !== OrderStatus.READY_FOR_PICKUP && (
+                     {order.status !== OrderStatus.READY_FOR_PICKUP && order.status !== OrderStatus.SHIPPED && (
                         <button 
                            onClick={() => handleUpdateStatus(order.id, OrderStatus.READY_FOR_PICKUP)}
-                           className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+                           className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm active:scale-95"
                         >
                            Marcar "Listo para Envío"
                         </button>
                      )}
                      
-                     <button 
-                        onClick={() => handleUpdateStatus(order.id, OrderStatus.SHIPPED)}
-                        className={`w-full py-2.5 border rounded-lg font-bold text-sm transition-colors ${
-                           order.status === OrderStatus.READY_FOR_PICKUP 
-                              ? 'bg-green-600 text-white border-green-600 hover:bg-green-700 shadow-sm'
-                              : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600'
-                        }`}
-                     >
-                        Marcar "En Camino"
+                     {(order.status === OrderStatus.READY_FOR_PICKUP || order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.PENDING) && order.status !== OrderStatus.SHIPPED && (
+                        <button 
+                           onClick={() => handleUpdateStatus(order.id, OrderStatus.SHIPPED)}
+                           className={`w-full py-2.5 border rounded-lg font-bold text-sm transition-colors active:scale-95 ${
+                              order.status === OrderStatus.READY_FOR_PICKUP 
+                                 ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-sm'
+                                 : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600'
+                           }`}
+                        >
+                           Marcar "En Camino"
+                        </button>
+                     )}
+                     <button onClick={() => console.log('Ver detalle de orden', order.id)} className="text-slate-400 font-bold text-xs hover:text-indigo-600 transition-colors flex items-center justify-center gap-1 mt-2">
+                        Ver Detalle <ArrowRight size={12}/>
                      </button>
                   </div>
                </div>

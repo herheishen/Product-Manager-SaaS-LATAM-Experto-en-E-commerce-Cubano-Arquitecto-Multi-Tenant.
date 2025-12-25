@@ -1,8 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
-import { Package, Plus, TrendingUp, DollarSign, AlertCircle, ShoppingBag, X, Check, Minus, RefreshCw } from 'lucide-react';
-import { getSupplierStats, getSupplierProducts, createProduct, updateProductStock } from '../services/api';
-import { KPI, Product } from '../types';
+import { Package, Plus, TrendingUp, DollarSign, AlertCircle, ShoppingBag, X, Check, Minus, RefreshCw, PencilLine } from 'lucide-react';
+import { getSupplierStats, getSupplierProducts, createProduct, updateProductStock, checkProductCompliance } from '../services/api';
+import { KPI, Product, UserRole, SupplierStatus } from '../types';
+// Fix: Import PRODUCT_CATEGORIES from constants, not types
+import { PRODUCT_CATEGORIES } from '../constants';
 
 const SupplierDashboard: React.FC = () => {
   const [stats, setStats] = useState<KPI[]>([]);
@@ -11,19 +12,26 @@ const SupplierDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [updatingStock, setUpdatingStock] = useState<string | null>(null);
 
+  // Mock current user's role and supplier status
+  const currentUserRole = UserRole.SUPPLIER;
+  const currentSupplierStatus = SupplierStatus.VERIFIED; // Mock as verified for demo
+
   // New Product Form State
   const [newProduct, setNewProduct] = useState({
     name: '',
+    description: '',
     priceWholesale: '',
     stock: '',
-    category: 'Alimentos'
+    category: PRODUCT_CATEGORIES[0],
+    imageUrl: ''
   });
+  const [complianceError, setComplianceError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       const [statsData, productsData] = await Promise.all([
         getSupplierStats(),
-        getSupplierProducts()
+        getSupplierProducts('s-cerro') // Mock specific supplier ID
       ]);
       setStats(statsData);
       setProducts(productsData);
@@ -34,23 +42,43 @@ const SupplierDashboard: React.FC = () => {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createProduct(newProduct);
-    setIsModalOpen(false);
-    // Optimistic Update
-    setProducts([...products, {
-      id: `new-${Date.now()}`,
-      name: newProduct.name,
-      priceWholesale: Number(newProduct.priceWholesale),
-      priceRetail: Number(newProduct.priceWholesale) * 1.3,
-      stock: Number(newProduct.stock),
-      currency: 'USD',
-      description: 'Nuevo producto agregado',
-      supplierId: 'me',
-      supplierName: 'Mi Negocio',
-      category: newProduct.category,
-      imageUrl: 'https://images.unsplash.com/photo-1595079676339-1534801fafde?auto=format&fit=crop&q=80&w=300'
-    }]);
-    setNewProduct({ name: '', priceWholesale: '', stock: '', category: 'Alimentos' });
+    setComplianceError(null);
+
+    const wholesalePrice = Number(newProduct.priceWholesale);
+    const stock = Number(newProduct.stock);
+
+    if (wholesalePrice <= 0) {
+        setComplianceError("El precio mayorista debe ser mayor que 0.");
+        return;
+    }
+    if (stock <= 0) {
+        setComplianceError("El stock inicial debe ser mayor que 0.");
+        return;
+    }
+
+    try {
+        await createProduct(newProduct);
+        setIsModalOpen(false);
+        // Optimistic Update
+        setProducts([...products, {
+        id: `new-${Date.now()}`,
+        name: newProduct.name,
+        description: newProduct.description,
+        priceWholesale: wholesalePrice,
+        priceRetail: wholesalePrice * 1.3, // Default markup
+        stock: stock,
+        currency: 'USD',
+        supplierId: 's-cerro',
+        supplierName: 'Almacenes El Cerro',
+        category: newProduct.category,
+        imageUrl: newProduct.imageUrl || 'https://via.placeholder.com/300x300?text=Nuevo+Producto',
+        qualityScore: 70,
+        supplierReputation: { fulfillmentRate: 90, dispatchTimeHours: 24, verified: true, trustScore: 90 }
+        }]);
+        setNewProduct({ name: '', description: '', priceWholesale: '', stock: '', category: PRODUCT_CATEGORIES[0], imageUrl: '' });
+    } catch (error: any) {
+        setComplianceError(error.message);
+    }
   };
 
   const handleQuickStockUpdate = async (productId: string, delta: number) => {
@@ -66,6 +94,9 @@ const SupplierDashboard: React.FC = () => {
     setUpdatingStock(null);
   };
 
+  const isPublishingAllowed = currentSupplierStatus === SupplierStatus.VERIFIED;
+
+
   if (loading) return <div className="flex justify-center items-center h-64 text-slate-500">Cargando Panel de Proveedor...</div>;
 
   return (
@@ -77,11 +108,20 @@ const SupplierDashboard: React.FC = () => {
          </div>
          <button 
            onClick={() => setIsModalOpen(true)}
-           className="bg-slate-900 text-white px-5 py-3 rounded-xl font-bold flex items-center hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all active:scale-95"
+           disabled={!isPublishingAllowed}
+           className="bg-slate-900 text-white px-5 py-3 rounded-xl font-bold flex items-center hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
          >
             <Plus size={20} className="mr-2" /> Nuevo Producto
          </button>
       </div>
+
+      {/* Warning if not verified */}
+      {!isPublishingAllowed && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl flex items-center gap-3">
+          <AlertCircle size={20} className="flex-shrink-0" />
+          <p className="text-sm font-medium">Tu perfil de proveedor está en revisión o no ha sido verificado. No puedes publicar productos aún.</p>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -90,7 +130,7 @@ const SupplierDashboard: React.FC = () => {
                <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">{stat.label}</p>
                   <h3 className="text-3xl font-bold text-slate-900 mt-2 tracking-tight">{stat.value}</h3>
-                  <p className={`text-xs mt-2 font-medium flex items-center ${stat.isPositive ? 'text-green-600' : 'text-orange-500'}`}>
+                  <p className={`text-xs mt-2 font-medium flex items-center ${stat.isPositive ? 'text-emerald-600' : 'text-orange-500'}`}>
                      {stat.isPositive ? <TrendingUp size={14} className="mr-1"/> : <AlertCircle size={14} className="mr-1"/>}
                      {stat.subtext}
                   </p>
@@ -106,7 +146,7 @@ const SupplierDashboard: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
          <div className="p-6 border-b border-slate-100 flex justify-between items-center">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-               <Package className="text-sky-500" /> Inventario Activo
+               <Package className="text-indigo-500" /> Inventario Activo
             </h2>
             <div className="text-xs text-slate-400 font-medium">
                Mostrando {products.length} productos
@@ -128,7 +168,7 @@ const SupplierDashboard: React.FC = () => {
                      <tr key={product.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <img src={product.imageUrl} className="w-12 h-12 rounded-lg object-cover bg-slate-100 border border-slate-200" />
+                              <img src={product.imageUrl} className="w-12 h-12 rounded-lg object-cover bg-slate-100 border border-slate-200" alt={product.name}/>
                               <div>
                                  <p className="font-bold text-slate-900">{product.name}</p>
                                  <p className="text-xs text-slate-400">{product.category}</p>
@@ -136,7 +176,7 @@ const SupplierDashboard: React.FC = () => {
                            </div>
                         </td>
                         <td className="px-6 py-4 font-mono text-slate-600 font-medium">
-                           {product.priceWholesale} {product.currency}
+                           {product.priceWholesale.toFixed(2)} {product.currency}
                         </td>
                         <td className="px-6 py-4">
                            <div className="flex items-center justify-center gap-3">
@@ -160,12 +200,14 @@ const SupplierDashboard: React.FC = () => {
                            </div>
                         </td>
                         <td className="px-6 py-4">
-                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${product.stock > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                               {product.stock > 0 ? 'Publicado' : 'Agotado'}
                            </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                           <button className="text-slate-400 font-bold text-xs hover:text-sky-600 transition-colors">Editar</button>
+                           <button onClick={() => console.log('Edit product', product.id)} className="text-slate-400 font-bold text-xs hover:text-indigo-600 transition-colors flex items-center justify-end gap-1">
+                             <PencilLine size={14} /> Editar
+                           </button>
                         </td>
                      </tr>
                   ))}
@@ -184,14 +226,39 @@ const SupplierDashboard: React.FC = () => {
                   <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={20} className="text-slate-400"/></button>
                </div>
                <form onSubmit={handleCreateProduct} className="p-6 space-y-5">
+                  {complianceError && (
+                    <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl flex items-center gap-3">
+                      <AlertCircle size={20} className="flex-shrink-0" />
+                      <p className="text-sm font-medium">{complianceError}</p>
+                    </div>
+                  )}
                   <div>
                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Nombre del Producto</label>
                      <input 
                         required 
                         value={newProduct.name}
                         onChange={e => setNewProduct({...newProduct, name: e.target.value})}
-                        className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all outline-none font-medium"
+                        className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all outline-none font-medium text-slate-900"
                         placeholder="Ej. Caja de Pollo 15kg"
+                     />
+                  </div>
+                  <div>
+                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Descripción (opcional)</label>
+                     <textarea 
+                        value={newProduct.description}
+                        onChange={e => setNewProduct({...newProduct, description: e.target.value})}
+                        className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all outline-none font-medium text-slate-900 resize-none"
+                        rows={3}
+                        placeholder="Detalles sobre el producto, peso, tamaño, etc."
+                     />
+                  </div>
+                  <div>
+                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">URL de Imagen (opcional)</label>
+                     <input 
+                        value={newProduct.imageUrl}
+                        onChange={e => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                        className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all outline-none font-medium text-slate-900"
+                        placeholder="https://example.com/imagen.jpg"
                      />
                   </div>
                   <div className="grid grid-cols-2 gap-5">
@@ -200,10 +267,10 @@ const SupplierDashboard: React.FC = () => {
                         <div className="relative">
                            <span className="absolute left-4 top-3 text-slate-400">$</span>
                            <input 
-                              required type="number"
+                              required type="number" step="0.01"
                               value={newProduct.priceWholesale}
                               onChange={e => setNewProduct({...newProduct, priceWholesale: e.target.value})}
-                              className="w-full border border-slate-200 bg-slate-50 rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all outline-none font-bold text-slate-800"
+                              className="w-full border border-slate-200 bg-slate-50 rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all outline-none font-bold text-slate-800"
                               placeholder="0.00"
                            />
                         </div>
@@ -214,7 +281,7 @@ const SupplierDashboard: React.FC = () => {
                            required type="number"
                            value={newProduct.stock}
                            onChange={e => setNewProduct({...newProduct, stock: e.target.value})}
-                           className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all outline-none font-bold text-slate-800"
+                           className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all outline-none font-bold text-slate-800"
                            placeholder="0"
                         />
                      </div>
@@ -224,12 +291,9 @@ const SupplierDashboard: React.FC = () => {
                      <select 
                         value={newProduct.category}
                         onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                        className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all outline-none font-medium text-slate-700"
+                        className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all outline-none font-medium text-slate-700"
                      >
-                        <option>Alimentos</option>
-                        <option>Aseo</option>
-                        <option>Electrónica</option>
-                        <option>Hogar</option>
+                        {PRODUCT_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                      </select>
                   </div>
                   

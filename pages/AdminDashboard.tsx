@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from 'react';
 import { 
   Users, CheckCircle, XCircle, AlertTriangle, FileText, 
@@ -6,9 +7,9 @@ import {
 } from 'lucide-react';
 import { 
   getAdminStats, getSupplierRequests, getPendingPayouts, 
-  validateCubanCI, validateCubanPhone, verifySupplier 
+  validateCubanCI, validateCubanPhone, verifySupplier, updatePayoutStatus 
 } from '../services/api';
-import { KPI, SupplierRequest, SupplierStatus, Payout, PayoutStatus } from '../types';
+import { KPI, SupplierRequest, SupplierStatus, Payout, PayoutStatus, UserRole } from '../types';
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<KPI[]>([]);
@@ -54,6 +55,11 @@ const AdminDashboard: React.FC = () => {
     setAuditResult(null);
   };
 
+  const handlePayout = async (payoutId: string) => {
+    await updatePayoutStatus(payoutId, PayoutStatus.PAID);
+    setPayouts(prev => prev.map(p => p.id === payoutId ? { ...p, status: PayoutStatus.PAID } : p));
+  };
+
   const renderOverview = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -62,7 +68,7 @@ const AdminDashboard: React.FC = () => {
             <div>
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{stat.label}</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</h3>
-              <p className={`text-xs mt-1 font-medium ${stat.isPositive ? 'text-green-600' : 'text-orange-500'}`}>
+              <p className={`text-xs mt-1 font-medium ${stat.isPositive ? 'text-emerald-600' : 'text-orange-500'}`}>
                 {stat.subtext}
               </p>
             </div>
@@ -80,12 +86,12 @@ const AdminDashboard: React.FC = () => {
       <div className="p-6 border-b border-slate-100 flex justify-between items-center">
         <h2 className="text-lg font-bold text-slate-800">Control de Proveedores (KYC)</h2>
         <div className="relative">
-          <input type="text" placeholder="Buscar..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          <input type="text" placeholder="Buscar..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-900 bg-slate-50" />
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
         </div>
       </div>
       <table className="w-full text-sm text-left">
-        <thead className="bg-slate-50 text-slate-500 font-medium">
+        <thead className="bg-slate-50/50 text-slate-500 font-medium">
           <tr>
             <th className="px-6 py-3">Negocio / Dueño</th>
             <th className="px-6 py-3">Legalidad</th>
@@ -107,15 +113,17 @@ const AdminDashboard: React.FC = () => {
               <td className="px-6 py-4 font-mono text-slate-600">{req.documentId}</td>
               <td className="px-6 py-4">
                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                  req.status === SupplierStatus.VERIFIED ? 'bg-green-100 text-green-700' : 
-                  req.status === SupplierStatus.PENDING ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                  req.status === SupplierStatus.VERIFIED ? 'bg-emerald-100 text-emerald-700' : 
+                  req.status === SupplierStatus.PENDING ? 'bg-orange-100 text-orange-700' : 'bg-rose-100 text-rose-700'
                 }`}>
-                  {req.status}
+                  {req.status === SupplierStatus.VERIFIED ? 'Verificado' : req.status === SupplierStatus.PENDING ? 'Pendiente' : 'Rechazado'}
                 </span>
               </td>
               <td className="px-6 py-4 text-right space-x-2">
                 {req.status === SupplierStatus.PENDING && (
-                   <button onClick={() => handleAudit(req)} className="text-indigo-600 font-bold text-xs">Auditar</button>
+                   <button onClick={() => handleAudit(req)} className="text-indigo-600 font-bold text-xs hover:underline flex items-center justify-end gap-1">
+                     <ShieldCheck size={14}/> Auditar
+                   </button>
                 )}
               </td>
             </tr>
@@ -133,7 +141,7 @@ const AdminDashboard: React.FC = () => {
          </h2>
          <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-               <thead className="bg-slate-50 text-slate-500 font-medium">
+               <thead className="bg-slate-50/50 text-slate-500 font-medium">
                   <tr>
                      <th className="px-6 py-3">Proveedor</th>
                      <th className="px-6 py-3">Periodo</th>
@@ -152,15 +160,18 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                            <span className={`px-2 py-1 rounded text-xs font-bold ${
-                              pay.status === PayoutStatus.PAID ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                              pay.status === PayoutStatus.PAID ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                            }`}>
                               {pay.status === PayoutStatus.PAID ? 'Pagado' : 'Pendiente'}
                            </span>
                         </td>
                         <td className="px-6 py-4 text-right">
                            {pay.status !== PayoutStatus.PAID && (
-                              <button className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-800">
-                                 Liquidar
+                              <button 
+                                onClick={() => handlePayout(pay.id)}
+                                className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-800 active:scale-95 flex items-center justify-end gap-1"
+                              >
+                                 <CreditCard size={14} /> Liquidar
                               </button>
                            )}
                         </td>
@@ -177,22 +188,22 @@ const AdminDashboard: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-             <Truck className="text-blue-500" /> Envíos en Curso (La Habana)
+             <Truck className="text-indigo-500" /> Envíos en Curso (La Habana)
           </h2>
           <div className="space-y-4">
              {[1, 2, 3].map(i => (
                 <div key={i} className="flex items-center justify-between p-4 border border-slate-100 rounded-lg hover:bg-slate-50">
                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
+                      <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
                          <Package size={20} />
                       </div>
                       <div>
-                         <p className="font-bold text-slate-900 text-sm">ORD-{1000+i}</p>
+                         <p className="font-bold text-slate-900 text-sm">ORD-{2023000+i}</p>
                          <p className="text-xs text-slate-500">Destino: Playa, Calle 60</p>
                       </div>
                    </div>
                    <div className="text-right">
-                      <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">En Ruta</span>
+                      <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">En Ruta</span>
                       <p className="text-[10px] text-slate-400 mt-1">Mensajero: Y. Pérez</p>
                    </div>
                 </div>
@@ -208,11 +219,11 @@ const AdminDashboard: React.FC = () => {
              </div>
              <div className="flex justify-between items-center border-b border-slate-700 pb-2">
                 <span className="text-sm text-slate-400">Incidencias</span>
-                <span className="font-bold text-red-400">2%</span>
+                <span className="font-bold text-rose-400">2%</span>
              </div>
              <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-400">Entregados Hoy</span>
-                <span className="font-bold text-green-400">14</span>
+                <span className="font-bold text-emerald-400">14</span>
              </div>
           </div>
        </div>
@@ -249,21 +260,27 @@ const AdminDashboard: React.FC = () => {
            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 animate-in zoom-in duration-200">
               <div className="flex justify-between items-center mb-6">
                  <h3 className="font-bold text-lg">Auditoría: {selectedRequest.businessName}</h3>
-                 <button onClick={() => setSelectedRequest(null)}><X size={20}/></button>
+                 <button onClick={() => setSelectedRequest(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={20} className="text-slate-400"/></button>
               </div>
               <div className="space-y-4 mb-6">
-                 <div className={`p-3 rounded-lg flex justify-between items-center ${auditResult.validCI ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                    <span className="text-sm font-medium">Formato Carnet ID</span>
+                 <div className={`p-3 rounded-lg flex justify-between items-center ${auditResult.validCI ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>
+                    <span className="text-sm font-medium">Formato Carnet ID ({selectedRequest.documentId})</span>
                     {auditResult.validCI ? <CheckCircle size={16}/> : <XCircle size={16}/>}
                  </div>
-                 <div className={`p-3 rounded-lg flex justify-between items-center ${auditResult.validPhone ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                    <span className="text-sm font-medium">Formato Teléfono (+53)</span>
+                 <div className={`p-3 rounded-lg flex justify-between items-center ${auditResult.validPhone ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>
+                    <span className="text-sm font-medium">Formato Teléfono Cubano ({selectedRequest.phone})</span>
                     {auditResult.validPhone ? <CheckCircle size={16}/> : <XCircle size={16}/>}
                  </div>
               </div>
               <div className="flex gap-3">
-                 <button onClick={() => confirmVerification(false)} className="flex-1 py-3 border border-slate-300 rounded-lg font-bold hover:bg-slate-50">Rechazar</button>
-                 <button onClick={() => confirmVerification(true)} className="flex-1 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700">Aprobar</button>
+                 <button onClick={() => confirmVerification(false)} className="flex-1 py-3 border border-slate-300 rounded-lg font-bold hover:bg-slate-50 text-slate-700 active:scale-95">Rechazar</button>
+                 <button 
+                   onClick={() => confirmVerification(true)} 
+                   disabled={!auditResult.validCI || !auditResult.validPhone}
+                   className="flex-1 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   Aprobar
+                 </button>
               </div>
            </div>
         </div>

@@ -1,32 +1,36 @@
-
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, CartesianGrid, Tooltip } from 'recharts';
-import { getResellerKPIs, getOrders, getPlanLimits, getRecentNotifications, getInventoryPredictions } from '../services/api';
+import { getResellerKPIs, getResellerOrders, getPlanLimits, getRecentNotifications, getInventoryPredictions } from '../services/api';
 import { KPI, Notification, NotificationType, AIPrediction, PlanTier } from '../types';
 import { TrendingUp, TrendingDown, Zap, AlertTriangle, Tag, BrainCircuit, Rocket, Check, Store, ShoppingBag, Share2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom'; // Using Link for internal navigation
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onNavigate: (path: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [predictions, setPredictions] = useState<AIPrediction[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Simulated Onboarding State
-  const [showOnboarding, setShowOnboarding] = useState(true);
   const [onboardingSteps, setOnboardingSteps] = useState([
-    { id: 1, title: 'Personaliza tu Tienda', desc: 'Sube tu logo y elige colores.', done: true, icon: Store },
-    { id: 2, title: 'Agrega tu Primer Producto', desc: 'Explora el Marketplace.', done: false, icon: ShoppingBag },
-    { id: 3, title: 'Comparte en WhatsApp', desc: 'Consigue tu primera venta.', done: false, icon: Share2 },
+    { id: 1, title: 'Personaliza tu Tienda', desc: 'Sube tu logo y elige colores.', done: true, icon: Store, path: '/my-store' },
+    { id: 2, title: 'Agrega tu Primer Producto', desc: 'Explora el Marketplace.', done: false, icon: ShoppingBag, path: '/marketplace' },
+    { id: 3, title: 'Comparte en WhatsApp', desc: 'Consigue tu primera venta.', done: false, icon: Share2, path: '/my-store' }, // Path to Marketing tab
   ]);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   const currentPlan = PlanTier.FREE;
   const limits = getPlanLimits(currentPlan);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [kpiData, , notifData, predData] = await Promise.all([
+      const [kpiData, ordersData, notifData, predData] = await Promise.all([
         getResellerKPIs(),
-        getOrders(),
+        // Fix: Changed `getOrders()` to `getResellerOrders()`
+        getResellerOrders(), // To check if user has orders
         getRecentNotifications(),
         getInventoryPredictions(),
       ]);
@@ -34,9 +38,35 @@ const Dashboard: React.FC = () => {
       setNotifications(notifData);
       setPredictions(predData);
       setLoading(false);
+
+      // Determine onboarding status
+      const hasProducts = (await (await fetch('/api/my-store-products')).json()).length > 0; // Simulate actual data check
+      const hasOrders = ordersData.length > 0;
+      
+      const updatedSteps = [...onboardingSteps];
+      if (hasProducts) updatedSteps[1].done = true;
+      if (hasOrders) updatedSteps[2].done = true; // Assuming sharing leads to orders
+      setOnboardingSteps(updatedSteps);
+
+      if (updatedSteps.every(step => step.done)) {
+        setOnboardingCompleted(true);
+      }
     };
     fetchData();
   }, []);
+
+  const handleOnboardingStepClick = (stepId: number, path: string) => {
+    // For demo purposes, we'll mark the step as done after navigation,
+    // in a real app, this would be triggered by actual data (e.g., product added)
+    const updatedSteps = onboardingSteps.map(step => 
+      step.id === stepId ? { ...step, done: true } : step
+    );
+    setOnboardingSteps(updatedSteps);
+    if (updatedSteps.every(step => step.done)) {
+      setOnboardingCompleted(true);
+    }
+    onNavigate(path);
+  };
 
   if (loading) return <div className="p-10 text-center text-slate-400">Cargando...</div>;
 
@@ -49,7 +79,11 @@ const Dashboard: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
              {onboardingSteps.map((step) => (
-                <div key={step.id} className={`bg-white/10 backdrop-blur-md border ${step.done ? 'border-emerald-400/50 bg-emerald-900/20' : 'border-white/10'} p-4 rounded-xl flex items-start gap-3 transition-all hover:bg-white/20 cursor-pointer`}>
+                <button 
+                  key={step.id} 
+                  onClick={() => !step.done && handleOnboardingStepClick(step.id, step.path)}
+                  className={`bg-white/10 backdrop-blur-md border ${step.done ? 'border-emerald-400/50 bg-emerald-900/20' : 'border-white/10'} p-4 rounded-xl flex items-start gap-3 transition-all hover:bg-white/20 cursor-pointer text-left`}
+                >
                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step.done ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white'}`}>
                       {step.done ? <Check size={16} /> : <span className="font-bold text-sm">{step.id}</span>}
                    </div>
@@ -57,7 +91,7 @@ const Dashboard: React.FC = () => {
                       <h3 className={`font-bold text-sm ${step.done ? 'text-emerald-200' : 'text-white'}`}>{step.title}</h3>
                       <p className="text-xs text-indigo-200 mt-0.5">{step.desc}</p>
                    </div>
-                </div>
+                </button>
              ))}
           </div>
        </div>
@@ -79,7 +113,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {showOnboarding && renderOnboarding()}
+      {!onboardingCompleted && renderOnboarding()}
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -102,7 +136,12 @@ const Dashboard: React.FC = () => {
              <div>
                 <div className="flex justify-between items-center mb-2">
                    <span className="text-xs font-bold text-indigo-300 uppercase tracking-wide">Plan {currentPlan}</span>
-                   <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white group-hover:bg-white/20">Mejorar Plan</span>
+                   <button 
+                     onClick={() => onNavigate('/subscription')}
+                     className="text-[10px] bg-white/10 px-2 py-1 rounded text-white group-hover:bg-white/20 hover:scale-105 active:scale-95 transition-all"
+                   >
+                     Mejorar Plan
+                   </button>
                 </div>
                 <p className="text-2xl font-bold mt-2">3 / {limits.maxOrdersPerMonth} Pedidos</p>
                 <p className="text-xs text-slate-400 mt-1">Renueva en 12 días</p>
@@ -118,7 +157,10 @@ const Dashboard: React.FC = () => {
          <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-slate-900">Rendimiento Semanal</h3>
-                <button className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center">
+                <button 
+                  onClick={() => console.log('Navegar a reporte completo')}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center"
+                >
                     Ver Reporte <ArrowRight size={12} className="ml-1"/>
                 </button>
             </div>
@@ -154,8 +196,8 @@ const Dashboard: React.FC = () => {
                            <p className="text-sm font-bold text-slate-800 truncate">{p.productName}</p>
                            <p className="text-xs text-slate-500">Quedan {p.currentStock} u</p>
                         </div>
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${p.daysUntilStockout < 5 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                           {p.daysUntilStockout} días
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${p.daysUntilStockout < 5 && p.daysUntilStockout > 0 ? 'bg-rose-100 text-rose-700' : p.daysUntilStockout === 0 ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'}`}>
+                           {p.daysUntilStockout > 0 ? `${p.daysUntilStockout} días` : 'Agotado'}
                         </span>
                      </div>
                   ))}

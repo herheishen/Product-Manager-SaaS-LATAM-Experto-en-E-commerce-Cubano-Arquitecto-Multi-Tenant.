@@ -1,4 +1,5 @@
-import { ChartColumn, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity, Zap, ClipboardList } from 'lucide-react';
+
+import { LayoutDashboard, Package, Users, DollarSign, ShoppingBag, Truck, Settings, ShieldCheck, FileText, Activity, Zap, ClipboardList, Store, Megaphone, HelpCircle, Headphones, Palette, Star, MessageCircle } from 'lucide-react';
 
 export const APP_NAME = "Kiosko.cu";
 
@@ -13,26 +14,43 @@ export const MUNICIPIOS_HABANA = [
   "Boyeros", "Arroyo Naranjo", "Cotorro"
 ];
 
+export const PRODUCT_CATEGORIES = [
+  "Alimentos", "Aseo Personal", "Aseo Hogar", "Electrónica", "Hogar", "Automotriz", "Moda", "Construcción", "Otros"
+];
+
+export const PAYMENT_METHODS = [ // Used in PublicStore for clarity
+  "Efectivo", "Transfermóvil", "Zelle", "USDT"
+]
+
 export const NAVIGATION_ITEMS = {
   RESELLER: [
-    { name: 'Dashboard', icon: ChartColumn, path: '/' },
+    { name: 'Inicio', icon: LayoutDashboard, path: '/' },
     { name: 'Mercado', icon: ShoppingBag, path: '/marketplace' },
-    { name: 'Mi Tienda', icon: Settings, path: '/my-store' },
-    { name: 'Pedidos', icon: Package, path: '/orders' },
+    { name: 'Mi Tienda', icon: Store, path: '/my-store' },
+    { name: 'Pedidos', icon: ClipboardList, path: '/orders' },
+    { name: 'Marketing', icon: Megaphone, path: '/marketing' }, // New tab in StoreManager
     { name: 'Suscripción', icon: Zap, path: '/subscription' },
+    { name: 'Ajustes', icon: Settings, path: '/settings' },
+    { name: 'Soporte', icon: HelpCircle, path: '/help' },
   ],
   SUPPLIER: [
-    { name: 'Dashboard', icon: ChartColumn, path: '/' },
+    { name: 'Resumen', icon: LayoutDashboard, path: '/' },
     { name: 'Inventario', icon: Package, path: '/inventory' },
     { name: 'Despacho', icon: ClipboardList, path: '/dispatch' },
-    { name: 'Gestores', icon: Users, path: '/resellers' },
     { name: 'Finanzas', icon: DollarSign, path: '/finance' },
+    { name: 'Mi Perfil', icon: Store, path: '/profile' },
+    { name: 'Soporte', icon: HelpCircle, path: '/help' },
   ],
   ADMIN: [
-    { name: 'Control', icon: Activity, path: '/' },
+    { name: 'Control', icon: LayoutDashboard, path: '/' },
     { name: 'Proveedores', icon: ShieldCheck, path: '/admin/suppliers' },
-    { name: 'Logística', icon: Truck, path: '/admin/logistics' },
+    { name: 'Gestores', icon: Users, path: '/admin/resellers' },
+    { name: 'Productos', icon: Package, path: '/admin/products' },
+    { name: 'Órdenes', icon: ClipboardList, path: '/admin/orders' },
     { name: 'Finanzas', icon: DollarSign, path: '/admin/finance' },
+    { name: 'Logística', icon: Truck, path: '/admin/logistics' },
+    { name: 'Sistema', icon: Settings, path: '/admin/settings' },
+    { name: 'Soporte', icon: Headphones, path: '/admin/tickets' },
   ]
 };
 

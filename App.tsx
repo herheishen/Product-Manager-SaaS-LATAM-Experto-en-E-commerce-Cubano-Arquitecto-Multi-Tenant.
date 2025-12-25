@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -17,30 +18,25 @@ import { UserRole } from './types';
 const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState('/');
   const [role, setRole] = useState<UserRole>(UserRole.RESELLER);
-
-  // Check URL for "public store" simulation mode
-  const [isPublicStoreMode, setIsPublicStoreMode] = useState(false);
-
-  useEffect(() => {
-    if (window.location.pathname.startsWith('/store/')) {
-      setIsPublicStoreMode(true);
-    }
-  }, []);
+  const [activePublicStoreId, setActivePublicStoreId] = useState<string | null>(null);
 
   // When role changes, reset path to root to avoid 404s
   useEffect(() => {
     setCurrentPath('/');
+    setActivePublicStoreId(null); // Ensure public store mode is exited
   }, [role]);
 
-  // Handle fake navigation to public store
-  useEffect(() => {
-    if (currentPath === '/store/preview') {
-      setIsPublicStoreMode(true);
-    }
-  }, [currentPath]);
+  const handleViewPublicStore = (storeId: string) => {
+    setActivePublicStoreId(storeId);
+  };
 
-  if (isPublicStoreMode) {
-    return <PublicStore />;
+  const handleExitPublicStore = () => {
+    setActivePublicStoreId(null);
+    setCurrentPath('/my-store'); // Return to store manager after exiting public store
+  };
+
+  if (activePublicStoreId) {
+    return <PublicStore storeId={activePublicStoreId} onExitPublicStore={handleExitPublicStore} />;
   }
 
   const renderPage = () => {
@@ -48,11 +44,22 @@ const App: React.FC = () => {
     if (role === UserRole.ADMIN) {
       switch (currentPath) {
         case '/':
-          return <AdminDashboard />;
-        case '/admin/suppliers':
+        case '/admin/suppliers': // Default tab for Admin
            return <AdminDashboard />;
-        case '/admin/finance':
-           return <div className="p-10 text-center text-slate-500">Módulo Financiero Detallado (En Desarrollo)</div>;
+        case '/admin/resellers': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Gestión de Gestores (En Desarrollo)</div>;
+        case '/admin/products': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Auditoría de Productos Global (En Desarrollo)</div>;
+        case '/admin/orders': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Monitor de Órdenes Global (En Desarrollo)</div>;
+        case '/admin/finance': // Already implemented in AdminDashboard as tab
+           return <AdminDashboard />; // Tab is handled inside AdminDashboard
+        case '/admin/logistics': // Already implemented in AdminDashboard as tab
+           return <AdminDashboard />; // Tab is handled inside AdminDashboard
+        case '/admin/settings': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Configuración del Sistema (En Desarrollo)</div>;
+        case '/admin/tickets': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Sistema de Tickets de Soporte (En Desarrollo)</div>;
         default:
           return <AdminDashboard />;
       }
@@ -62,17 +69,23 @@ const App: React.FC = () => {
     if (role === UserRole.RESELLER) {
       switch (currentPath) {
         case '/':
-          return <Dashboard />;
+          return <Dashboard onNavigate={setCurrentPath} />;
         case '/marketplace':
           return <Marketplace />;
         case '/my-store':
-          return <StoreManager />;
+          return <StoreManager onViewPublicStore={handleViewPublicStore} />;
         case '/orders':
           return <Orders />;
+        case '/marketing': // Placeholder
+           return <StoreManager />; // Marketing tab is inside StoreManager
         case '/subscription':
           return <Subscription />;
+        case '/settings': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Ajustes de Cuenta (En Desarrollo)</div>;
+        case '/help': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Centro de Ayuda y FAQ (En Desarrollo)</div>;
         default:
-          return <Dashboard />;
+          return <Dashboard onNavigate={setCurrentPath} />;
       }
     }
 
@@ -80,19 +93,24 @@ const App: React.FC = () => {
     if (role === UserRole.SUPPLIER) {
       switch (currentPath) {
         case '/':
-           return <SupplierDashboard />;
-        case '/inventory':
+        case '/inventory': // Default tab for Supplier
            return <SupplierDashboard />;
         case '/dispatch':
            return <SupplierDispatch />;
-        case '/finance':
-           return <div className="p-10 text-center text-slate-500">Finanzas Proveedor (Liquidaciones Pendientes)</div>;
+        case '/resellers': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Mis Gestores (En Desarrollo)</div>;
+        case '/finance': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Finanzas Proveedor (En Desarrollo)</div>;
+        case '/profile': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Mi Perfil de Negocio (En Desarrollo)</div>;
+        case '/help': // Placeholder
+           return <div className="p-10 text-center text-slate-500">Centro de Ayuda y FAQ (En Desarrollo)</div>;
         default:
            return <SupplierDashboard />;
       }
     }
 
-    return <Dashboard />;
+    return <Dashboard onNavigate={setCurrentPath} />;
   };
 
   return (
@@ -105,7 +123,7 @@ const App: React.FC = () => {
       >
         {renderPage()}
       </Layout>
-      {role === UserRole.RESELLER && <AIChatbot />}
+      {(role === UserRole.RESELLER || role === UserRole.SUPPLIER) && <AIChatbot />}
     </>
   );
 };

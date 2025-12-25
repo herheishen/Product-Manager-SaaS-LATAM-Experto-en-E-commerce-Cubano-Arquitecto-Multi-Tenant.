@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Menu, Bell, User, ChevronDown, Search, LogOut } from 'lucide-react';
+import { Menu, Bell, User, ChevronDown, Search, LogOut, Wifi, WifiOff } from 'lucide-react';
 import { UserRole } from '../types';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 
@@ -14,6 +15,20 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, role, onRoleChange, currentPath, onNavigate }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   const getNavItems = () => {
     switch (role) {
@@ -144,6 +159,11 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onRoleChange, currentPa
              </div>
 
              <div className="flex items-center gap-2">
+                {/* Connectivity Indicator */}
+                <span className={`p-2.5 rounded-full ${isOnline ? 'text-emerald-500' : 'text-rose-500'}`} title={isOnline ? 'Online' : 'Offline'}>
+                  {isOnline ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
+                </span>
+
                 <button className="relative p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
                   <Bell className="w-5 h-5" />
                   <span className="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>

@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
   RESELLER = 'RESELLER', // "Gestor"
   SUPPLIER = 'SUPPLIER', // "Proveedor"
@@ -40,6 +41,20 @@ export enum NotificationType {
   PRICE_CHANGE = 'PRICE_CHANGE', // Important: Margen afectado
   SYSTEM = 'SYSTEM', // Mantenimiento, etc.
   COMPLIANCE_WARNING = 'COMPLIANCE_WARNING' // Producto eliminado por ilegal
+}
+
+export enum PaymentMethod {
+  CASH = 'Efectivo',
+  TRANSFERMOVIL = 'Transfermóvil',
+  ZELLE = 'Zelle',
+  USDT = 'USDT'
+}
+
+export enum StoreStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  PENDING = 'PENDING'
 }
 
 export interface Notification {
@@ -111,11 +126,12 @@ export interface StoreProduct extends Product {
 }
 
 export interface StoreConfig {
+  ownerId: string; // User ID of the reseller
   name: string;
   subdomain: string; 
   themeColor: string;
   whatsappNumber: string;
-  products: string[];
+  products: string[]; // IDs of products in this store
   planTier: PlanTier;
   acceptedPayments: {
     cash: boolean;
@@ -123,6 +139,7 @@ export interface StoreConfig {
     zelle: boolean;
     usdt: boolean;
   };
+  storeStatus: StoreStatus;
 }
 
 export interface CartItem {
@@ -140,7 +157,7 @@ export interface CheckoutDetails {
   phone: string;
   address: string;
   municipality: string;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
   notes?: string;
 }
 
@@ -186,6 +203,9 @@ export interface SupplierRequest {
   status: SupplierStatus;
   registeredDate: string;
   inventoryCount: number;
+  fulfillmentRate?: number; // Added for verification display
+  dispatchTimeHours?: number; // Added for verification display
+  trustScore?: number; // Added for verification display
   verificationData?: VerificationResult;
 }
 
@@ -238,4 +258,18 @@ export interface Challenge {
   deadline: string;
   type: 'SALES' | 'SHARES' | 'REVIEWS';
   icon: 'FIRE' | 'TROPHY' | 'STAR' | 'ROCKET';
+}
+
+export interface UserSession {
+  userId: string;
+  role: UserRole;
+  storeId?: string; // For resellers
+  supplierId?: string; // For suppliers
+  isLoggedIn: boolean;
+}
+
+export interface OnboardingStatus {
+  personalizeStore: boolean;
+  addProduct: boolean;
+  shareStore: boolean;
 }
